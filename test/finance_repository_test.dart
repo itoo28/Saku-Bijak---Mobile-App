@@ -329,5 +329,289 @@ void main() {
       expect(restoredTransactions.first.amount, 200000);
       expect(restoredTransactions.first.note, 'Uang saku');
     });
+
+    test('6. Edit Transaksi (Pembaruan nominal dan penyesuaian saldo)', () async {
+      final account = Account()
+        ..uuid = 'acc-edit-1'
+        ..name = 'BCA'
+        ..accountType = 'bank'
+        ..balance = 1000000
+        ..currency = 'IDR'
+        ..icon = 'account_balance'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      final category = Category()
+        ..uuid = 'cat-edit-1'
+        ..name = 'Belanja'
+        ..type = 'expense'
+        ..icon = 'shopping_bag'
+        ..colorValue = 0xFFFFFFFF
+        ..isCustom = false;
+
+      await repo.saveAccount(account);
+      await repo.saveCategory(category);
+
+      // Create initial expense: 200.000 -> balance becomes 800.000
+      final txn = Transaction()
+        ..uuid = 'txn-edit-1'
+        ..type = 'expense'
+        ..amount = 200000
+        ..accountId = account.id
+        ..categoryId = category.id
+        ..date = DateTime.now()
+        ..note = 'Belanja baju'
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      await repo.saveTransaction(txn);
+      var acc = await repo.getAccount(account.id);
+      expect(acc?.balance, 800000);
+
+      // Edit transaction: change amount to 350.000 (an increase of 150.000)
+      final editedTxn = Transaction()
+        ..id = txn.id
+        ..uuid = txn.uuid
+        ..type = 'expense'
+        ..amount = 350000
+        ..accountId = account.id
+        ..categoryId = category.id
+        ..date = txn.date
+        ..note = 'Belanja baju & celana'
+        ..createdAt = txn.createdAt
+        ..updatedAt = DateTime.now();
+
+      await repo.saveTransaction(editedTxn);
+
+      acc = await repo.getAccount(account.id);
+      expect(acc?.balance, 650000); // 1.000.000 - 350.000 = 650.000
+
+      final txns = await repo.getTransactions();
+      expect(txns.length, 1);
+      expect(txns.first.amount, 350000);
+      expect(txns.first.note, 'Belanja baju & celana');
+    });
+
+    test('7. Edit Transfer (Pembaruan nominal transfer dan penyesuaian kedua akun)', () async {
+      final acc1 = Account()
+        ..uuid = 'acc-trf-1'
+        ..name = 'Bank Asal'
+        ..accountType = 'bank'
+        ..balance = 1000000
+        ..currency = 'IDR'
+        ..icon = 'account_balance'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      final acc2 = Account()
+        ..uuid = 'acc-trf-2'
+        ..name = 'Bank Tujuan'
+        ..accountType = 'bank'
+        ..balance = 500000
+        ..currency = 'IDR'
+        ..icon = 'account_balance'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      await repo.saveAccount(acc1);
+      await repo.saveAccount(acc2);
+
+      // Transfer 300.000: acc1 becomes 700.000, acc2 becomes 800.000
+      final trf = Transfer()
+        ..uuid = 'trf-1'
+        ..fromAccountId = acc1.id
+        ..toAccountId = acc2.id
+        ..amount = 300000
+        ..date = DateTime.now()
+        ..note = 'Transfer awal'
+        ..createdAt = DateTime.now();
+
+      await repo.saveTransfer(trf);
+
+      var a1 = await repo.getAccount(acc1.id);
+      var a2 = await repo.getAccount(acc2.id);
+      expect(a1?.balance, 700000);
+      expect(a2?.balance, 800000);
+
+      // Edit transfer: change amount to 400.000 (100.000 more)
+      final editedTrf = Transfer()
+        ..id = trf.id
+        ..uuid = trf.uuid
+        ..fromAccountId = acc1.id
+        ..toAccountId = acc2.id
+        ..amount = 400000
+        ..date = trf.date
+        ..note = 'Transfer direvisi'
+        ..createdAt = trf.createdAt;
+
+      await repo.saveTransfer(editedTrf);
+
+      a1 = await repo.getAccount(acc1.id);
+      a2 = await repo.getAccount(acc2.id);
+      expect(a1?.balance, 600000); // 1.000.000 - 400.000 = 600.000
+      expect(a2?.balance, 900000); // 500.000 + 400.000 = 900.000
+
+      final trfs = await repo.getTransfers();
+      expect(trfs.length, 1);
+      expect(trfs.first.amount, 400000);
+      expect(trfs.first.note, 'Transfer direvisi');
+    });
+
+    test('8. Validasi Penarikan Goal (Withdrawal melebihi saldo terkunci pada akun terkait ditolak)', () async {
+      final account1 = Account()
+        ..uuid = 'acc-gw-1'
+        ..name = 'BCA'
+        ..accountType = 'bank'
+        ..balance = 1000000
+        ..currency = 'IDR'
+        ..icon = 'account_balance'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      final account2 = Account()
+        ..uuid = 'acc-gw-2'
+        ..name = 'Tunai'
+        ..accountType = 'cash'
+        ..balance = 500000
+        ..currency = 'IDR'
+        ..icon = 'payments'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+
+      await repo.saveAccount(account1);
+      await repo.saveAccount(account2);
+
+      final goal = Goal()
+        ..uuid = 'goal-gw-1'
+        ..name = 'Kamera'
+        ..targetAmount = 5000000
+        ..description = 'Tabungan beli kamera'
+        ..status = 'active'
+        ..createdAt = DateTime.now();
+
+      await repo.saveGoal(goal);
+
+      // Deposit 400.000 from account1
+      final dep = GoalTransaction()
+        ..uuid = 'gt-dep-1'
+        ..goalId = goal.id
+        ..accountId = account1.id
+        ..type = 'deposit'
+        ..amount = 400000
+        ..date = DateTime.now();
+      await repo.saveGoalTransaction(dep);
+
+      // Attempt withdrawal from account2 (which has 0 locked) -> rejected
+      final invalidWithdrawal = GoalTransaction()
+        ..uuid = 'gt-wd-invalid'
+        ..goalId = goal.id
+        ..accountId = account2.id
+        ..type = 'withdrawal'
+        ..amount = 100000
+        ..date = DateTime.now();
+
+      expect(
+        () => repo.saveGoalTransaction(invalidWithdrawal),
+        throwsA(isA<StateError>()),
+      );
+
+      // Valid withdrawal from account1 for 200.000 -> accepted
+      final validWithdrawal = GoalTransaction()
+        ..uuid = 'gt-wd-valid'
+        ..goalId = goal.id
+        ..accountId = account1.id
+        ..type = 'withdrawal'
+        ..amount = 200000
+        ..date = DateTime.now();
+      await repo.saveGoalTransaction(validWithdrawal);
+
+      final remainingLocked = await repo.getLockedBalance(account1.id);
+      expect(remainingLocked, 200000);
+      final goalProgress = await repo.getGoalProgressAmount(goal.id);
+      expect(goalProgress, 200000);
+    });
+
+    test('9. Pencegahan Duplikasi Budget Aktif per Kategori pada Bulan yang Sama', () async {
+      final category = Category()
+        ..uuid = 'cat-bgt-1'
+        ..name = 'Makanan'
+        ..type = 'expense'
+        ..icon = 'restaurant'
+        ..colorValue = 0xFFFFFFFF
+        ..isCustom = false;
+      await repo.saveCategory(category);
+
+      final now = DateTime.now();
+      final budget1 = Budget()
+        ..uuid = 'bgt-uniq-1'
+        ..categoryId = category.id
+        ..amountLimit = 1000000
+        ..period = DateTime(now.year, now.month, 1)
+        ..createdAt = now;
+      await repo.saveBudget(budget1);
+
+      // Save a second budget for same category and month with new limit
+      final budget2 = Budget()
+        ..uuid = 'bgt-uniq-2'
+        ..categoryId = category.id
+        ..amountLimit = 1500000
+        ..period = DateTime(now.year, now.month, 15)
+        ..createdAt = now;
+      await repo.saveBudget(budget2);
+
+      final budgets = await repo.getBudgets(now);
+      expect(budgets.length, 1); // Not duplicated
+      expect(budgets.first.amountLimit, 1500000); // Updated to 1.500.000
+    });
+
+    test('10. Soft-delete Akun dengan Goal Transactions tetap diarsipkan (tidak terhapus permanen)', () async {
+      final account = Account()
+        ..uuid = 'acc-arch-1'
+        ..name = 'Rekening Tabungan'
+        ..accountType = 'bank'
+        ..balance = 2000000
+        ..currency = 'IDR'
+        ..icon = 'account_balance'
+        ..colorValue = 0xFFFFFFFF
+        ..isArchived = false
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+      await repo.saveAccount(account);
+
+      final goal = Goal()
+        ..uuid = 'goal-arch-1'
+        ..name = 'Emergency Fund'
+        ..targetAmount = 10000000
+        ..description = 'Dana darurat'
+        ..status = 'active'
+        ..createdAt = DateTime.now();
+      await repo.saveGoal(goal);
+
+      final dep = GoalTransaction()
+        ..uuid = 'gt-arch-1'
+        ..goalId = goal.id
+        ..accountId = account.id
+        ..type = 'deposit'
+        ..amount = 500000
+        ..date = DateTime.now();
+      await repo.saveGoalTransaction(dep);
+
+      // Attempt soft-delete account
+      await repo.softDeleteAccount(account.id);
+
+      final checkAcc = await repo.getAccount(account.id);
+      expect(checkAcc?.isArchived, true);
+      expect(checkAcc?.deletedAt, isNull); // Archived, not deleted
+    });
   });
 }

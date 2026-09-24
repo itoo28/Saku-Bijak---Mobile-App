@@ -23,6 +23,30 @@ class _GoalWithdrawSheetState extends ConsumerState<GoalWithdrawSheet> {
   int _maxWithdrawable = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final accounts = ref.read(accountsProvider).value ?? [];
+      final repo = ref.read(financeRepositoryProvider);
+      for (var acc in accounts) {
+        if (!acc.isArchived) {
+          final locked = await repo.getLockedBalanceForGoalAndAccount(
+            widget.goal.id,
+            acc.id,
+          );
+          if (locked > 0 && mounted) {
+            setState(() {
+              _selectedAccountId = acc.id;
+              _maxWithdrawable = locked;
+            });
+            break;
+          }
+        }
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     super.dispose();

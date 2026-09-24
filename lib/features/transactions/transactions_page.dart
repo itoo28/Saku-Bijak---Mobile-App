@@ -5,6 +5,8 @@ import '../../core/utils/currency_formatter.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/database/schemas/transaction.dart' as schema;
 import '../../core/database/schemas/transfer.dart';
+import 'widgets/add_transaction_sheet.dart';
+import 'widgets/add_transfer_sheet.dart';
 
 class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
@@ -176,6 +178,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         ),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _editTransaction(context, t),
         onLongPress: () => _confirmDeleteTransaction(context, ref, t.id),
         child: Row(
           children: [
@@ -253,6 +257,15 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                 ),
               ],
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              color: AppTheme.lightTextSecondary,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Edit Transaksi',
+              onPressed: () => _editTransaction(context, t),
+            ),
           ],
         ),
       ),
@@ -276,6 +289,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         ),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _editTransfer(context, t),
         onLongPress: () => _confirmDeleteTransfer(context, ref, t.id),
         child: Row(
           children: [
@@ -344,8 +359,40 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                 ),
               ],
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18),
+              color: AppTheme.lightTextSecondary,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              tooltip: 'Edit Transfer',
+              onPressed: () => _editTransfer(context, t),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _editTransaction(BuildContext context, schema.Transaction transaction) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddTransactionSheet(
+        type: transaction.type,
+        transaction: transaction,
+      ),
+    );
+  }
+
+  void _editTransfer(BuildContext context, Transfer transfer) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddTransferSheet(
+        transfer: transfer,
       ),
     );
   }

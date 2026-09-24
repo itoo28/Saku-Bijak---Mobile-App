@@ -278,21 +278,28 @@ class FinanceRepository {
           .where()
           .filter()
           .accountIdEqualTo(id)
+          .and()
           .deletedAtIsNull()
           .count();
 
       final transferCount = await isar!.transfers
           .where()
           .filter()
-          .fromAccountIdEqualTo(id)
-          .or()
-          .toAccountIdEqualTo(id)
+          .group((q) => q.fromAccountIdEqualTo(id).or().toAccountIdEqualTo(id))
+          .and()
+          .deletedAtIsNull()
+          .count();
+
+      final goalTxnCount = await isar!.goalTransactions
+          .where()
+          .filter()
+          .accountIdEqualTo(id)
           .and()
           .deletedAtIsNull()
           .count();
 
       await isar!.writeTxn(() async {
-        if (transactionCount > 0 || transferCount > 0) {
+        if (transactionCount > 0 || transferCount > 0 || goalTxnCount > 0) {
           account.isArchived = true;
           account.updatedAt = DateTime.now();
           await isar!.accounts.put(account);
@@ -310,8 +317,9 @@ class FinanceRepository {
 
     final hasTxns = _inMemTransactions.any((t) => t.accountId == id && t.deletedAt == null);
     final hasTrfs = _inMemTransfers.any((t) => (t.fromAccountId == id || t.toAccountId == id) && t.deletedAt == null);
+    final hasGoals = _inMemGoalTransactions.any((t) => t.accountId == id && t.deletedAt == null);
 
-    if (hasTxns || hasTrfs) {
+    if (hasTxns || hasTrfs || hasGoals) {
       account.isArchived = true;
       account.updatedAt = DateTime.now();
     } else {
@@ -435,14 +443,17 @@ class FinanceRepository {
           }
         }
 
-        if (transaction.type == 'income') {
-          account.balance += transaction.amount;
-        } else {
-          account.balance -= transaction.amount;
-        }
-        account.updatedAt = DateTime.now();
+        final targetAccount = await isar!.accounts.get(transaction.accountId);
+        if (targetAccount != null) {
+          if (transaction.type == 'income') {
+            targetAccount.balance += transaction.amount;
+          } else {
+            targetAccount.balance -= transaction.amount;
+          }
+          targetAccount.updatedAt = DateTime.now();
 
-        await isar!.accounts.put(account);
+          await isar!.accounts.put(targetAccount);
+        }
         await isar!.transactions.put(transaction);
       });
       return;
@@ -489,8 +500,8 @@ class FinanceRepository {
       if (txn == null || txn.deletedAt != null) return;
 
       final account = await isar!.accounts.get(txn.accountId);
-      if (account != null) {
-        await isar!.writeTxn(() async {
+      await isar!.writeTxn(() async {
+        if (account != null) {
           if (txn.type == 'income') {
             account.balance -= txn.amount;
           } else {
@@ -498,12 +509,12 @@ class FinanceRepository {
           }
           account.updatedAt = DateTime.now();
           await isar!.accounts.put(account);
+        }
 
-          txn.deletedAt = DateTime.now();
-          txn.updatedAt = DateTime.now();
-          await isar!.transactions.put(txn);
-        });
-      }
+        txn.deletedAt = DateTime.now();
+        txn.updatedAt = DateTime.now();
+        await isar!.transactions.put(txn);
+      });
       return;
     }
 
@@ -588,13 +599,18 @@ class FinanceRepository {
           }
         }
 
-        fromAcc.balance -= transfer.amount;
-        toAcc.balance += transfer.amount;
-        fromAcc.updatedAt = DateTime.now();
-        toAcc.updatedAt = DateTime.now();
-
-        await isar!.accounts.put(fromAcc);
-        await isar!.accounts.put(toAcc);
+        final targetFrom = await isar!.accounts.get(transfer.fromAccountId);
+        final targetTo = await isar!.accounts.get(transfer.toAccountId);
+        if (targetFrom != null) {
+          targetFrom.balance -= transfer.amount;
+          targetFrom.updatedAt = DateTime.now();
+          await isar!.accounts.put(targetFrom);
+        }
+        if (targetTo != null) {
+          targetTo.balance += transfer.amount;
+          targetTo.updatedAt = DateTime.now();
+          await isar!.accounts.put(targetTo);
+        }
         await isar!.transfers.put(transfer);
       });
       return;
@@ -829,6 +845,11 @@ class FinanceRepository {
       if (txn.amount > currentProgress) {
         throw StateError('NOMINAL_MELEBIHI_SALDO_GOAL');
       }
+      final lockedForAccount =
+          await getLockedBalanceForGoalAndAccount(txn.goalId, txn.accountId);
+      if (txn.amount > lockedForAccount) {
+        throw StateError('NOMINAL_MELEBIHI_SALDO_TERKUNCI_AKUN');
+      }
     }
 
     if (isar != null) {
@@ -873,6 +894,18 @@ class FinanceRepository {
       await isar!.writeTxn(() async {
         txn.deletedAt = DateTime.now();
         await isar!.goalTransactions.put(txn);
+
+        final goal = await isar!.goals.get(txn.goalId);
+        if (goal != null) {
+          final progress = await getGoalProgressAmount(txn.goalId);
+          if (progress < goal.targetAmount && goal.status == 'completed') {
+            goal.status = 'active';
+            await isar!.goals.put(goal);
+          } else if (progress >= goal.targetAmount && goal.status != 'completed') {
+            goal.status = 'completed';
+            await isar!.goals.put(goal);
+          }
+        }
       });
       return;
     }
@@ -880,6 +913,15 @@ class FinanceRepository {
     final txn = _inMemGoalTransactions.where((t) => t.id == id).firstOrNull;
     if (txn != null) {
       txn.deletedAt = DateTime.now();
+      final goal = await getGoal(txn.goalId);
+      if (goal != null) {
+        final progress = await getGoalProgressAmount(txn.goalId);
+        if (progress < goal.targetAmount && goal.status == 'completed') {
+          goal.status = 'active';
+        } else if (progress >= goal.targetAmount && goal.status != 'completed') {
+          goal.status = 'completed';
+        }
+      }
     }
   }
 
@@ -915,7 +957,26 @@ class FinanceRepository {
       throw ArgumentError('Limit budget harus lebih besar dari 0.');
     }
 
+    final start = DateTime(budget.period.year, budget.period.month, 1);
+    final end = DateTime(budget.period.year, budget.period.month + 1, 0, 23, 59, 59);
+
     if (isar != null) {
+      if (budget.id == Isar.autoIncrement || budget.id == 0) {
+        final existing = await isar!.budgets
+            .where()
+            .filter()
+            .categoryIdEqualTo(budget.categoryId)
+            .and()
+            .periodBetween(start, end)
+            .and()
+            .deletedAtIsNull()
+            .findFirst();
+        if (existing != null) {
+          budget.id = existing.id;
+          budget.uuid = existing.uuid;
+        }
+      }
+
       await isar!.writeTxn(() async {
         await isar!.budgets.put(budget);
       });
@@ -923,6 +984,20 @@ class FinanceRepository {
     }
 
     if (budget.id == Isar.autoIncrement || budget.id == 0) {
+      final existing = _inMemBudgets.where((b) =>
+          b.categoryId == budget.categoryId &&
+          b.period.isAfter(start.subtract(const Duration(seconds: 1))) &&
+          b.period.isBefore(end.add(const Duration(seconds: 1))) &&
+          b.deletedAt == null).firstOrNull;
+      if (existing != null) {
+        budget.id = existing.id;
+        budget.uuid = existing.uuid;
+        final idx = _inMemBudgets.indexWhere((b) => b.id == existing.id);
+        if (idx >= 0) {
+          _inMemBudgets[idx] = budget;
+          return;
+        }
+      }
       budget.id = _nextInMemId++;
       _inMemBudgets.add(budget);
     } else {

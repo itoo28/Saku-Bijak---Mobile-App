@@ -75,8 +75,9 @@ final accountBalancesProvider = FutureProvider.family<Map<String, int>, int>((
   accountId,
 ) async {
   final repo = ref.watch(financeRepositoryProvider);
-  // Watch accounts and transactions to recalculate when they change
+  // Watch accounts and goals to recalculate when they change
   ref.watch(accountsProvider);
+  ref.watch(goalsProvider);
 
   final locked = await repo.getLockedBalance(accountId);
   final available = await repo.getAvailableBalance(accountId);
@@ -87,6 +88,22 @@ final accountBalancesProvider = FutureProvider.family<Map<String, int>, int>((
     'locked': locked,
     'available': available,
   };
+});
+
+// Helper provider for total locked balance across all active accounts
+final totalLockedBalanceProvider = FutureProvider<int>((ref) async {
+  final accountsAsync = ref.watch(accountsProvider);
+  final repo = ref.watch(financeRepositoryProvider);
+  ref.watch(goalsProvider);
+
+  final accounts = accountsAsync.value ?? [];
+  int sum = 0;
+  for (var acc in accounts) {
+    if (!acc.isArchived) {
+      sum += await repo.getLockedBalance(acc.id);
+    }
+  }
+  return sum;
 });
 
 // ==========================================

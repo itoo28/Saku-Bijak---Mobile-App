@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/finance_providers.dart';
 import '../../core/providers.dart';
 import '../../core/database/schemas/transaction.dart';
+import '../../core/database/schemas/transfer.dart';
 import '../../core/database/schemas/goal.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/health_score_calculator.dart';
@@ -48,28 +49,17 @@ class DashboardPage extends ConsumerWidget {
 
     // Calculate totals
     int totalAssets = 0;
-    int totalLocked = 0;
 
     accountsAsync.whenData((accounts) {
       for (var acc in accounts) {
-        totalAssets += acc.balance;
+        if (!acc.isArchived) {
+          totalAssets += acc.balance;
+        }
       }
     });
 
-    // Compute locked amount for all accounts
-    final lockedBalancesAsync = ref.watch(
-      FutureProvider<int>((ref) async {
-        final accounts = accountsAsync.value ?? [];
-        int sum = 0;
-        final repo = ref.watch(financeRepositoryProvider);
-        for (var acc in accounts) {
-          sum += await repo.getLockedBalance(acc.id);
-        }
-        return sum;
-      }),
-    );
-
-    totalLocked = lockedBalancesAsync.value ?? 0;
+    final lockedBalancesAsync = ref.watch(totalLockedBalanceProvider);
+    final totalLocked = lockedBalancesAsync.value ?? 0;
     final availableBalance = totalAssets - totalLocked;
 
     // Compute monthly income & expense
@@ -381,7 +371,7 @@ class DashboardPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildRecentTransactions(context, ref, transactionsAsync),
+              _buildRecentTransactions(context, ref),
 
               const SizedBox(height: 48),
             ]),
@@ -668,14 +658,12 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentTransactions(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue<List<Transaction>> transactionsAsync,
-  ) {
-    return transactionsAsync.when(
-      data: (txns) {
-        if (txns.isEmpty) {
+  Widget _buildRecentTransactions(BuildContext context, WidgetRef ref) {
+    final mergedAsync = ref.watch(mergedTransactionsProvider);
+
+    return mergedAsync.when(
+      data: (merged) {
+        if (merged.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Text(
@@ -688,102 +676,195 @@ class DashboardPage extends ConsumerWidget {
           );
         }
 
-        final recentTxns = txns.take(10).toList();
+        final recent = merged.take(10).toList();
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          itemCount: recentTxns.length,
+          itemCount: recent.length,
           itemBuilder: (context, index) {
-            final t = recentTxns[index];
-            final isIncome = t.type == 'income';
+            final item = recent[index];
+            if (item is Transaction) {
+              final isIncome = item.type == 'income';
+              final categoryAsync =
+                  ref.watch(categoryByIdProvider(item.categoryId));
+              final accountAsync = ref.watch(accountByIdProvider(item.accountId));
 
-            final categoryAsync = ref.watch(categoryByIdProvider(t.categoryId));
-            final accountAsync = ref.watch(accountByIdProvider(t.accountId));
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkCard : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF2C2454)
-                      : Colors.grey.shade100,
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2C2454)
+                        : Colors.grey.shade100,
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color:
-                          (isIncome
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _showAddTransaction(
+                    context,
+                    item.type,
+                    transaction: item,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: (isIncome
                                   ? AppTheme.secondaryColor
                                   : AppTheme.expenseColor)
                               .withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                      color: isIncome
-                          ? AppTheme.secondaryColor
-                          : AppTheme.expenseColor,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          categoryAsync.value?.name ?? 'Memuat...',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          accountAsync.value?.name ?? 'Memuat...',
-                          style: const TextStyle(
-                            color: AppTheme.lightTextSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${isIncome ? '+' : '-'}${CurrencyFormatter.format(t.amount)}',
-                        style: TextStyle(
+                        child: Icon(
+                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
                           color: isIncome
                               ? AppTheme.secondaryColor
                               : AppTheme.expenseColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${t.date.day}/${t.date.month}',
-                        style: const TextStyle(
-                          color: AppTheme.lightTextSecondary,
-                          fontSize: 11,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              categoryAsync.value?.name ?? 'Memuat...',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              accountAsync.value?.name ?? 'Memuat...',
+                              style: const TextStyle(
+                                color: AppTheme.lightTextSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${isIncome ? '+' : '-'}${CurrencyFormatter.format(item.amount)}',
+                            style: TextStyle(
+                              color: isIncome
+                                  ? AppTheme.secondaryColor
+                                  : AppTheme.expenseColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${item.date.day}/${item.date.month}',
+                            style: const TextStyle(
+                              color: AppTheme.lightTextSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            );
+                ),
+              );
+            } else {
+              final trf = item as Transfer;
+              final fromAccountAsync =
+                  ref.watch(accountByIdProvider(trf.fromAccountId));
+              final toAccountAsync =
+                  ref.watch(accountByIdProvider(trf.toAccountId));
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkCard : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark
+                        ? const Color(0xFF2C2454)
+                        : Colors.grey.shade100,
+                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => _showAddTransfer(context, transfer: trf),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppTheme.infoColor.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.swap_horiz_outlined,
+                          color: AppTheme.infoColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Perpindahan Dana',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${fromAccountAsync.value?.name ?? '...'} → ${toAccountAsync.value?.name ?? '...'}',
+                              style: const TextStyle(
+                                color: AppTheme.lightTextSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            CurrencyFormatter.format(trf.amount),
+                            style: const TextStyle(
+                              color: AppTheme.infoColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${trf.date.day}/${trf.date.month}',
+                            style: const TextStyle(
+                              color: AppTheme.lightTextSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
           },
         );
       },
@@ -814,21 +895,26 @@ class DashboardPage extends ConsumerWidget {
   // SHEET LAUNCHERS
   // ==========================================
 
-  void _showAddTransaction(BuildContext context, String type) {
+  void _showAddTransaction(
+    BuildContext context,
+    String type, {
+    Transaction? transaction,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => AddTransactionSheet(type: type),
+      builder: (context) =>
+          AddTransactionSheet(type: type, transaction: transaction),
     );
   }
 
-  void _showAddTransfer(BuildContext context) {
+  void _showAddTransfer(BuildContext context, {Transfer? transfer}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const AddTransferSheet(),
+      builder: (context) => AddTransferSheet(transfer: transfer),
     );
   }
 

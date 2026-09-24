@@ -9,7 +9,13 @@ import '../../../core/utils/currency_formatter.dart';
 
 class AddTransactionSheet extends ConsumerStatefulWidget {
   final String type; // income, expense
-  const AddTransactionSheet({super.key, required this.type});
+  final Transaction? transaction;
+
+  const AddTransactionSheet({
+    super.key,
+    required this.type,
+    this.transaction,
+  });
 
   @override
   ConsumerState<AddTransactionSheet> createState() =>
@@ -24,6 +30,19 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   int? _selectedAccountId;
   int? _selectedCategoryId;
   DateTime _selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.transaction != null) {
+      final t = widget.transaction!;
+      _amountController.text = CurrencyFormatter.format(t.amount);
+      _noteController.text = t.note;
+      _selectedAccountId = t.accountId;
+      _selectedCategoryId = t.categoryId;
+      _selectedDate = t.date;
+    }
+  }
 
   @override
   void dispose() {
@@ -76,21 +95,28 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       return;
     }
 
+    final isEdit = widget.transaction != null;
     final txn = Transaction()
-      ..uuid = ''
+      ..id = isEdit ? widget.transaction!.id : 0
+      ..uuid = isEdit ? widget.transaction!.uuid : ''
       ..type = widget.type
       ..amount = amount
       ..accountId = _selectedAccountId!
       ..categoryId = _selectedCategoryId!
       ..date = _selectedDate
-      ..note = _noteController.text;
+      ..note = _noteController.text
+      ..createdAt = isEdit ? widget.transaction!.createdAt : DateTime.now()
+      ..updatedAt = DateTime.now();
 
-    if (widget.type == 'expense') {
-      final repo = ref.read(financeRepositoryProvider);
-      final available = await repo.getAvailableBalance(_selectedAccountId!);
-
-      if (amount > available) {
-        // Balance is insufficient: prompt confirmation
+    try {
+      if (isEdit) {
+        await ref.read(transactionsProvider.notifier).updateTransaction(txn);
+      } else {
+        await ref.read(transactionsProvider.notifier).addTransaction(txn);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (e.toString().contains('SALDO_KURANG')) {
         if (!mounted) return;
         final proceed = await showDialog<bool>(
           context: context,
@@ -107,7 +133,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child: const Text(
-                  'Tetap Catat',
+                  'Tetap Simpan',
                   style: TextStyle(color: AppTheme.expenseColor),
                 ),
               ),
@@ -117,23 +143,23 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
 
         if (proceed != true) return;
 
-        // Save transaction with force negative
         try {
-          await ref
-              .read(transactionsProvider.notifier)
-              .addTransaction(txn, forceNegative: true);
+          if (isEdit) {
+            await ref
+                .read(transactionsProvider.notifier)
+                .updateTransaction(txn, forceNegative: true);
+          } else {
+            await ref
+                .read(transactionsProvider.notifier)
+                .addTransaction(txn, forceNegative: true);
+          }
           if (mounted) Navigator.pop(context);
-        } catch (e) {
-          _showError(e.toString());
+        } catch (e2) {
+          _showError(e2.toString());
         }
         return;
       }
-    }
 
-    try {
-      await ref.read(transactionsProvider.notifier).addTransaction(txn);
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
       _showError(e.toString());
     }
   }
@@ -185,9 +211,13 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               ),
               const SizedBox(height: 16),
               Text(
-                widget.type == 'income'
-                    ? 'Catat Pemasukan'
-                    : 'Catat Pengeluaran',
+                widget.transaction != null
+                    ? (widget.type == 'income'
+                        ? 'Edit Pemasukan'
+                        : 'Edit Pengeluaran')
+                    : (widget.type == 'income'
+                        ? 'Catat Pemasukan'
+                        : 'Catat Pengeluaran'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -215,7 +245,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               accountsAsync.when(
                 data: (accounts) {
                   final activeAccounts = accounts
-                      .where((a) => !a.isArchived)
+                      .where((a) => !a.isArchived || a.id == _selectedAccountId)
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _selectedAccountId,
@@ -298,7 +328,11 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
               // Submit button
               ElevatedButton(
                 onPressed: _submit,
-                child: const Text('Simpan Transaksi'),
+                child: Text(
+                  widget.transaction != null
+                      ? 'Perbarui Transaksi'
+                      : 'Simpan Transaksi',
+                ),
               ),
             ],
           ),

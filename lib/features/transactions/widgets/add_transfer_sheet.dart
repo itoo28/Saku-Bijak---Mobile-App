@@ -8,7 +8,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 
 class AddTransferSheet extends ConsumerStatefulWidget {
-  const AddTransferSheet({super.key});
+  final Transfer? transfer;
+
+  const AddTransferSheet({super.key, this.transfer});
 
   @override
   ConsumerState<AddTransferSheet> createState() => _AddTransferSheetState();
@@ -22,6 +24,19 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
   int? _fromAccountId;
   int? _toAccountId;
   DateTime _selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.transfer != null) {
+      final t = widget.transfer!;
+      _amountController.text = CurrencyFormatter.format(t.amount);
+      _noteController.text = t.note;
+      _fromAccountId = t.fromAccountId;
+      _toAccountId = t.toAccountId;
+      _selectedDate = t.date;
+    }
+  }
 
   @override
   void dispose() {
@@ -81,35 +96,37 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
       return;
     }
 
-    // Verify source account balance
-    final repo = ref.read(financeRepositoryProvider);
-    final available = await repo.getAvailableBalance(_fromAccountId!);
-    if (!mounted) return;
-    if (amount > available) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Saldo asal tidak mencukupi untuk melakukan transfer.'),
-        ),
-      );
-      return;
-    }
-
+    final isEdit = widget.transfer != null;
     final transfer = Transfer()
-      ..uuid = ''
+      ..id = isEdit ? widget.transfer!.id : 0
+      ..uuid = isEdit ? widget.transfer!.uuid : ''
       ..fromAccountId = _fromAccountId!
       ..toAccountId = _toAccountId!
       ..amount = amount
       ..date = _selectedDate
-      ..note = _noteController.text;
+      ..note = _noteController.text
+      ..createdAt = isEdit ? widget.transfer!.createdAt : DateTime.now();
 
     try {
-      await ref.read(transfersProvider.notifier).addTransfer(transfer);
+      if (isEdit) {
+        await ref.read(transfersProvider.notifier).updateTransfer(transfer);
+      } else {
+        await ref.read(transfersProvider.notifier).addTransfer(transfer);
+      }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan transfer: $e')));
+      if (e.toString().contains('SALDO_KURANG')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Saldo akun asal tidak mencukupi untuk transfer ini.'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menyimpan transfer: $e')),
+        );
+      }
     }
   }
 
@@ -146,9 +163,11 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Perpindahan Dana (Transfer)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                widget.transfer != null
+                    ? 'Edit Transfer Saldo'
+                    : 'Perpindahan Dana (Transfer)',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -172,7 +191,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
               accountsAsync.when(
                 data: (accounts) {
                   final activeAccounts = accounts
-                      .where((a) => !a.isArchived)
+                      .where((a) => !a.isArchived || a.id == _fromAccountId)
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _fromAccountId,
@@ -203,7 +222,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
               accountsAsync.when(
                 data: (accounts) {
                   final activeAccounts = accounts
-                      .where((a) => !a.isArchived)
+                      .where((a) => !a.isArchived || a.id == _toAccountId)
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _toAccountId,
@@ -258,7 +277,11 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
               // Submit button
               ElevatedButton(
                 onPressed: _submit,
-                child: const Text('Simpan Transfer'),
+                child: Text(
+                  widget.transfer != null
+                      ? 'Perbarui Transfer'
+                      : 'Simpan Transfer',
+                ),
               ),
             ],
           ),

@@ -128,25 +128,50 @@ class _LockPageState extends ConsumerState<LockPage> {
           children: [
             const Spacer(),
             Container(
-              width: 80,
-              height: 80,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              child: const Icon(
-                Icons.lock_outline,
-                size: 40,
-                color: AppTheme.primaryColor,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                    child: const Icon(
+                      Icons.lock_outline,
+                      size: 44,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
-              'Masukkan PIN Anda',
+              'Saku Bijak',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
                 color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Masukkan PIN Anda untuk membuka',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.white70 : AppTheme.lightTextSecondary,
               ),
             ),
             const SizedBox(height: 24),

@@ -62,22 +62,55 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Column(
             children: [
-              // Skip button
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: () {
-                    ref.read(appLockStateProvider.notifier).completeOnboarding();
-                  },
-                  child: Text(
-                    'Lewati',
-                    style: TextStyle(
-                      color: isDark ? AppTheme.primaryLight : AppTheme.primaryColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              // Top Bar with Logo & Skip button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Saku Bijak',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(appLockStateProvider.notifier).completeOnboarding();
+                    },
+                    child: Text(
+                      'Lewati',
+                      style: TextStyle(
+                        color: isDark ? AppTheme.primaryLight : AppTheme.primaryColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
               Expanded(
                 child: PageView.builder(

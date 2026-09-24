@@ -396,6 +396,61 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
           const SizedBox(height: 24),
 
+          // Tentang Aplikasi
+          const Text('Tentang Aplikasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          const SizedBox(height: 8),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Saku Bijak',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Versi 1.0.0 • 100% Offline & Privat',
+                          style: TextStyle(fontSize: 12, color: AppTheme.lightTextSecondary),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Kelola keuangan bijak tanpa cloud, bebas risiko kebocoran data.',
+                          style: TextStyle(fontSize: 11, color: AppTheme.lightTextSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
           // Reset Data
           const Text('Zona Bahaya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
           const SizedBox(height: 8),

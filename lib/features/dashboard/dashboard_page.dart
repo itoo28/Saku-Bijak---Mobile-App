@@ -84,7 +84,7 @@ class DashboardPage extends ConsumerWidget {
         slivers: [
           // Premium Header with Purple Gradient
           SliverAppBar(
-            expandedHeight: 280,
+            expandedHeight: 310,
             floating: false,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
@@ -102,13 +102,49 @@ class DashboardPage extends ConsumerWidget {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.only(
-                    top: 80.0,
+                    top: 60.0,
                     left: 24,
                     right: 24,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Saku Bijak',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       const Text(
                         'Total Saldo Aset',
                         style: TextStyle(

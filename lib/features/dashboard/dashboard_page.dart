@@ -1,0 +1,861 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../core/finance_providers.dart';
+import '../../core/providers.dart';
+import '../../core/database/schemas/transaction.dart';
+import '../../core/database/schemas/goal.dart';
+import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/health_score_calculator.dart';
+import '../../core/theme/app_theme.dart';
+import '../transactions/widgets/add_transaction_sheet.dart';
+import '../transactions/widgets/add_transfer_sheet.dart';
+import '../goals/widgets/add_goal_sheet.dart';
+import '../goals/widgets/goal_deposit_sheet.dart';
+import '../goals/widgets/goal_withdraw_sheet.dart';
+
+// Check if we should display the backup reminder banner
+final backupReminderProvider = FutureProvider<bool>((ref) async {
+  // Trigger check when transaction updates
+  ref.watch(transactionsProvider);
+
+  const storage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+  final lastBackupStr = await storage.read(key: 'last_backup_exported');
+  if (lastBackupStr == null) return true; // Never backed up
+
+  final lastBackup = DateTime.tryParse(lastBackupStr);
+  if (lastBackup == null) return true;
+
+  final diffDays = DateTime.now().difference(lastBackup).inDays;
+  return diffDays >= 30; // Alert if >= 30 days
+});
+
+class DashboardPage extends ConsumerWidget {
+  const DashboardPage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accountsAsync = ref.watch(accountsProvider);
+    final transactionsAsync = ref.watch(transactionsProvider);
+    final goalsAsync = ref.watch(goalsProvider);
+    final healthScoreAsync = ref.watch(financialHealthScoreProvider);
+    final showBackupReminderAsync = ref.watch(backupReminderProvider);
+
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Calculate totals
+    int totalAssets = 0;
+    int totalLocked = 0;
+
+    accountsAsync.whenData((accounts) {
+      for (var acc in accounts) {
+        totalAssets += acc.balance;
+      }
+    });
+
+    // Compute locked amount for all accounts
+    final lockedBalancesAsync = ref.watch(
+      FutureProvider<int>((ref) async {
+        final accounts = accountsAsync.value ?? [];
+        int sum = 0;
+        final repo = ref.watch(financeRepositoryProvider);
+        for (var acc in accounts) {
+          sum += await repo.getLockedBalance(acc.id);
+        }
+        return sum;
+      }),
+    );
+
+    totalLocked = lockedBalancesAsync.value ?? 0;
+    final availableBalance = totalAssets - totalLocked;
+
+    // Compute monthly income & expense
+    int monthlyIncome = 0;
+    int monthlyExpense = 0;
+    final now = DateTime.now();
+
+    transactionsAsync.whenData((txns) {
+      for (var t in txns) {
+        if (t.date.year == now.year && t.date.month == now.month) {
+          if (t.type == 'income') {
+            monthlyIncome += t.amount;
+          } else {
+            monthlyExpense += t.amount;
+          }
+        }
+      }
+    });
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          // Premium Header with Purple Gradient
+          SliverAppBar(
+            expandedHeight: 280,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF5324C4),
+                      AppTheme.primaryColor,
+                      Color(0xFF8C52FF),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: 80.0,
+                    left: 24,
+                    right: 24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Total Saldo Aset',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        CurrencyFormatter.format(totalAssets),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Sub-balances (Available & Locked)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHeaderSubCard(
+                              title: 'Saldo Tersedia',
+                              amount: availableBalance,
+                              icon: Icons.check_circle_outline,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildHeaderSubCard(
+                              title: 'Dana Terkunci',
+                              amount: totalLocked,
+                              icon: Icons.lock_clock_outlined,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Core Dashboard Content
+          SliverList(
+            delegate: SliverChildListDelegate([
+              // Backup reminder banner
+              showBackupReminderAsync.maybeWhen(
+                data: (show) => show
+                    ? Container(
+                        margin: const EdgeInsets.all(24),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.expenseColor.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppTheme.expenseColor.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: AppTheme.expenseColor,
+                              size: 28,
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Data Anda Belum Dicadangkan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Lakukan ekspor backup agar data Anda aman jika HP rusak atau hilang.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : const SizedBox(),
+                orElse: () => const SizedBox(),
+              ),
+
+              // Summary card for current month (Income vs Expense & Health Score)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Bulan Ini (${_getMonthName(now.month)})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                _buildSummaryItem(
+                                  label: 'Pemasukan',
+                                  amount: monthlyIncome,
+                                  color: AppTheme.secondaryColor,
+                                  icon: Icons.arrow_downward,
+                                ),
+                                const SizedBox(height: 12),
+                                _buildSummaryItem(
+                                  label: 'Pengeluaran',
+                                  amount: monthlyExpense,
+                                  color: AppTheme.expenseColor,
+                                  icon: Icons.arrow_upward,
+                                ),
+                              ],
+                            ),
+                            // Health Score Gauge
+                            Column(
+                              children: [
+                                const Text(
+                                  'Health Score',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppTheme.lightTextSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 80,
+                                      height: 80,
+                                      child: CircularProgressIndicator(
+                                        value:
+                                            (healthScoreAsync.value ?? 50) /
+                                            100,
+                                        strokeWidth: 8,
+                                        backgroundColor: isDark
+                                            ? Colors.grey.shade800
+                                            : Colors.grey.shade200,
+                                        valueColor:
+                                            const AlwaysStoppedAnimation<Color>(
+                                              AppTheme.primaryColor,
+                                            ),
+                                      ),
+                                    ),
+                                    Text(
+                                      '${healthScoreAsync.value ?? 0}',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Quick Actions Section
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Aksi Cepat',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildActionButton(
+                      context,
+                      label: 'Pemasukan',
+                      icon: Icons.add_circle_outline,
+                      color: AppTheme.secondaryColor,
+                      onTap: () => _showAddTransaction(context, 'income'),
+                    ),
+                    _buildActionButton(
+                      context,
+                      label: 'Pengeluaran',
+                      icon: Icons.remove_circle_outline,
+                      color: AppTheme.expenseColor,
+                      onTap: () => _showAddTransaction(context, 'expense'),
+                    ),
+                    _buildActionButton(
+                      context,
+                      label: 'Transfer',
+                      icon: Icons.swap_horiz_outlined,
+                      color: AppTheme.infoColor,
+                      onTap: () => _showAddTransfer(context),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 28),
+
+              // Active Goals Progress Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Target Tabungan Aktif',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showAddGoal(context),
+                      child: const Text('Tambah'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildActiveGoals(context, ref, goalsAsync),
+
+              const SizedBox(height: 28),
+
+              // Recent Transactions Section
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Transaksi Terakhir',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildRecentTransactions(context, ref, transactionsAsync),
+
+              const SizedBox(height: 48),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderSubCard({
+    required String title,
+    required int amount,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.white70, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            CurrencyFormatter.format(amount),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required String label,
+    required int amount,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 16),
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppTheme.lightTextSecondary,
+                fontSize: 11,
+              ),
+            ),
+            Text(
+              CurrencyFormatter.format(amount),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkCard : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade100,
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: 28),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveGoals(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<Goal>> goalsAsync,
+  ) {
+    return goalsAsync.when(
+      data: (goals) {
+        final activeGoals = goals
+            .where((g) => g.status == 'active' || g.status == 'overdue')
+            .toList();
+        if (activeGoals.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Text(
+              'Belum ada target tabungan aktif.',
+              style: TextStyle(
+                color: AppTheme.lightTextSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 180,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: activeGoals.length,
+            itemBuilder: (context, index) {
+              final goal = activeGoals[index];
+              final progressAsync = ref.watch(goalProgressProvider(goal.id));
+              final progressAmount = progressAsync.value ?? 0;
+              final percentage = goal.targetAmount > 0
+                  ? (progressAmount / goal.targetAmount).clamp(0.0, 1.0)
+                  : 0.0;
+
+              return Container(
+                width: 260,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                goal.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (goal.status == 'overdue')
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.expenseColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  'Terlewat',
+                                  style: TextStyle(
+                                    color: AppTheme.expenseColor,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Progress: ${(percentage * 100).toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.lightTextSecondary,
+                              ),
+                            ),
+                            Text(
+                              '${CurrencyFormatter.format(progressAmount)} / ${CurrencyFormatter.format(goal.targetAmount)}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        LinearProgressIndicator(
+                          value: percentage,
+                          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            AppTheme.primaryColor,
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () => _showWithdrawGoal(context, goal),
+                              child: const Text(
+                                'Tarik',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => _showDepositGoal(context, goal),
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(60, 32),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                              ),
+                              child: const Text(
+                                'Nabung',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Text('Error loading goals'),
+    );
+  }
+
+  Widget _buildRecentTransactions(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<List<Transaction>> transactionsAsync,
+  ) {
+    return transactionsAsync.when(
+      data: (txns) {
+        if (txns.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Text(
+              'Belum ada transaksi dicatat.',
+              style: TextStyle(
+                color: AppTheme.lightTextSecondary,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          );
+        }
+
+        final recentTxns = txns.take(10).toList();
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          itemCount: recentTxns.length,
+          itemBuilder: (context, index) {
+            final t = recentTxns[index];
+            final isIncome = t.type == 'income';
+
+            final categoryAsync = ref.watch(categoryByIdProvider(t.categoryId));
+            final accountAsync = ref.watch(accountByIdProvider(t.accountId));
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkCard : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF2C2454)
+                      : Colors.grey.shade100,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color:
+                          (isIncome
+                                  ? AppTheme.secondaryColor
+                                  : AppTheme.expenseColor)
+                              .withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                      color: isIncome
+                          ? AppTheme.secondaryColor
+                          : AppTheme.expenseColor,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          categoryAsync.value?.name ?? 'Memuat...',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          accountAsync.value?.name ?? 'Memuat...',
+                          style: const TextStyle(
+                            color: AppTheme.lightTextSecondary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${isIncome ? '+' : '-'}${CurrencyFormatter.format(t.amount)}',
+                        style: TextStyle(
+                          color: isIncome
+                              ? AppTheme.secondaryColor
+                              : AppTheme.expenseColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${t.date.day}/${t.date.month}',
+                        style: const TextStyle(
+                          color: AppTheme.lightTextSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const Text('Error loading transactions'),
+    );
+  }
+
+  String _getMonthName(int month) {
+    const list = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+    return list[month - 1];
+  }
+
+  // ==========================================
+  // SHEET LAUNCHERS
+  // ==========================================
+
+  void _showAddTransaction(BuildContext context, String type) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddTransactionSheet(type: type),
+    );
+  }
+
+  void _showAddTransfer(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddTransferSheet(),
+    );
+  }
+
+  void _showAddGoal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddGoalSheet(),
+    );
+  }
+
+  void _showDepositGoal(BuildContext context, Goal goal) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GoalDepositSheet(goal: goal),
+    );
+  }
+
+  void _showWithdrawGoal(BuildContext context, Goal goal) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GoalWithdrawSheet(goal: goal),
+    );
+  }
+}

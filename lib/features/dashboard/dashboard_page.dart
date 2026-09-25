@@ -289,137 +289,297 @@ class DashboardPage extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isDark
+                          ? const Color(0xFF2C2454)
+                          : Colors.grey.shade200,
+                    ),
+                  ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Bulan Ini (${_getMonthName(now.month)})',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: isDark
-                                      ? AppTheme.darkTextPrimary
-                                      : AppTheme.lightTextPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildSummaryItem(
-                                label: 'Pemasukan',
-                                amount: monthlyIncome,
-                                color: AppTheme.secondaryColor,
-                                icon: Icons.arrow_downward,
-                                isDark: isDark,
-                              ),
-                              const SizedBox(height: 12),
-                              _buildSummaryItem(
-                                label: 'Pengeluaran',
-                                amount: monthlyExpense,
-                                color: AppTheme.expenseColor,
-                                icon: Icons.arrow_upward,
-                                isDark: isDark,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        // Tombol Aksi Laporan Pengganti Health Score
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ReportsPage(),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor.withValues(
-                                  alpha: isDark ? 0.22 : 0.08,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: AppTheme.primaryColor.withValues(
-                                    alpha: isDark ? 0.4 : 0.22,
+                        // Header Bar: Bulan Ini + Tombol Laporan
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: (isDark
+                                            ? const Color(0xFFB794F6)
+                                            : AppTheme.primaryColor)
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.calendar_month_rounded,
+                                    size: 16,
+                                    color: isDark
+                                        ? const Color(0xFFB794F6)
+                                        : AppTheme.primaryColor,
                                   ),
                                 ),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 46,
-                                    height: 46,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [
-                                          Color(0xFF5324C4),
-                                          AppTheme.primaryColor,
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.primaryColor
-                                              .withValues(alpha: 0.35),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Bulan Ini (${_getMonthName(now.month)})',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: isDark
+                                        ? AppTheme.darkTextPrimary
+                                        : AppTheme.lightTextPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ReportsPage(),
                                     ),
-                                    child: const Icon(
-                                      Icons.bar_chart_rounded,
-                                      color: Colors.white,
-                                      size: 26,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (isDark
+                                            ? const Color(0xFFB794F6)
+                                            : AppTheme.primaryColor)
+                                        .withValues(alpha: isDark ? 0.2 : 0.08),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: (isDark
+                                              ? const Color(0xFFB794F6)
+                                              : AppTheme.primaryColor)
+                                          .withValues(alpha: isDark ? 0.35 : 0.2),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      Icon(
+                                        Icons.bar_chart_rounded,
+                                        size: 15,
+                                        color: isDark
+                                            ? const Color(0xFFB794F6)
+                                            : AppTheme.primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
                                       Text(
                                         'Laporan',
                                         style: TextStyle(
-                                          fontSize: 13,
+                                          fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                           color: isDark
-                                              ? AppTheme.darkTextPrimary
+                                              ? const Color(0xFFB794F6)
                                               : AppTheme.primaryColor,
                                         ),
                                       ),
                                       const SizedBox(width: 2),
                                       Icon(
                                         Icons.chevron_right_rounded,
-                                        size: 16,
+                                        size: 15,
                                         color: isDark
-                                            ? AppTheme.darkTextPrimary
+                                            ? const Color(0xFFB794F6)
                                             : AppTheme.primaryColor,
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Dua Kartu Sejajar: Pemasukan & Pengeluaran
+                        Row(
+                          children: [
+                            // Pemasukan
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.secondaryColor
+                                      .withValues(alpha: isDark ? 0.12 : 0.06),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppTheme.secondaryColor
+                                        .withValues(alpha: isDark ? 0.25 : 0.15),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.secondaryColor
+                                                .withValues(alpha: isDark ? 0.25 : 0.15),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.arrow_downward_rounded,
+                                            size: 14,
+                                            color: AppTheme.secondaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Pemasukan',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? AppTheme.darkTextSecondary
+                                                : AppTheme.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        CurrencyFormatter.format(monthlyIncome),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.secondaryColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Pengeluaran
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.expenseColor
+                                      .withValues(alpha: isDark ? 0.12 : 0.06),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppTheme.expenseColor
+                                        .withValues(alpha: isDark ? 0.25 : 0.15),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.expenseColor
+                                                .withValues(alpha: isDark ? 0.25 : 0.15),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.arrow_upward_rounded,
+                                            size: 14,
+                                            color: AppTheme.expenseColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Pengeluaran',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? AppTheme.darkTextSecondary
+                                                : AppTheme.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        CurrencyFormatter.format(monthlyExpense),
+                                        style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.expenseColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Net Cash Flow (Arus Kas Bersih)
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? const Color(0xFF1E293B)
+                                : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF334155)
+                                  : Colors.grey.shade200,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    (monthlyIncome - monthlyExpense) >= 0
+                                        ? Icons.account_balance_wallet_outlined
+                                        : Icons.warning_amber_rounded,
+                                    size: 15,
+                                    color: (monthlyIncome - monthlyExpense) >= 0
+                                        ? AppTheme.secondaryColor
+                                        : AppTheme.expenseColor,
+                                  ),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    'Lihat Grafik',
+                                    'Arus Kas Bersih',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.w500,
                                       color: isDark
                                           ? AppTheme.darkTextSecondary
@@ -428,7 +588,20 @@ class DashboardPage extends ConsumerWidget {
                                   ),
                                 ],
                               ),
-                            ),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '${(monthlyIncome - monthlyExpense) >= 0 ? '+' : '-'}${CurrencyFormatter.format((monthlyIncome - monthlyExpense).abs())}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: (monthlyIncome - monthlyExpense) >= 0
+                                        ? AppTheme.secondaryColor
+                                        : AppTheme.expenseColor,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -586,58 +759,6 @@ class DashboardPage extends ConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryItem({
-    required String label,
-    required int amount,
-    required Color color,
-    required IconData icon,
-    bool isDark = false,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: isDark
-                      ? AppTheme.darkTextSecondary
-                      : AppTheme.lightTextSecondary,
-                  fontSize: 11,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  CurrencyFormatter.format(amount),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: color,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

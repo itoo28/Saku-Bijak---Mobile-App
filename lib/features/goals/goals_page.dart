@@ -14,6 +14,8 @@ class GoalsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final goalsAsync = ref.watch(goalsProvider);
 
     return Scaffold(
@@ -40,14 +42,18 @@ class GoalsPage extends ConsumerWidget {
                   Icon(
                     Icons.track_changes_outlined,
                     size: 80,
-                    color: Colors.grey.withValues(alpha: 0.5),
+                    color: isDark
+                        ? Colors.white24
+                        : Colors.grey.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Belum ada target menabung.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: AppTheme.lightTextSecondary,
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -74,29 +80,37 @@ class GoalsPage extends ConsumerWidget {
             padding: const EdgeInsets.all(24),
             children: [
               if (activeGoals.isNotEmpty) ...[
-                const Text(
+                Text(
                   'Target Aktif',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...activeGoals.map((g) => _buildGoalCard(context, ref, g)),
+                ...activeGoals.map(
+                  (g) => _buildGoalCard(context, ref, g, isDark),
+                ),
               ],
               if (archivedGoals.isNotEmpty) ...[
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'Target Diarsipkan',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...archivedGoals.map((g) => _buildGoalCard(context, ref, g)),
+                ...archivedGoals.map(
+                  (g) => _buildGoalCard(context, ref, g, isDark),
+                ),
               ],
             ],
           );
@@ -108,7 +122,12 @@ class GoalsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildGoalCard(BuildContext context, WidgetRef ref, Goal goal) {
+  Widget _buildGoalCard(
+    BuildContext context,
+    WidgetRef ref,
+    Goal goal,
+    bool isDark,
+  ) {
     final progressAsync = ref.watch(goalProgressProvider(goal.id));
     final progressAmount = progressAsync.value ?? 0;
 
@@ -151,9 +170,12 @@ class GoalsPage extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       goal.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary,
                       ),
                     ),
                   ),
@@ -164,8 +186,10 @@ class GoalsPage extends ConsumerWidget {
               if (goal.deadline != null)
                 Text(
                   'Deadline: ${DateFormat('dd MMMM yyyy', 'id_ID').format(goal.deadline!)}',
-                  style: const TextStyle(
-                    color: AppTheme.lightTextSecondary,
+                  style: TextStyle(
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                     fontSize: 12,
                   ),
                 ),
@@ -176,16 +200,21 @@ class GoalsPage extends ConsumerWidget {
                 children: [
                   Text(
                     'Progress: ${(percentage * 100).toStringAsFixed(0)}%',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppTheme.lightTextSecondary,
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                     ),
                   ),
                   Text(
                     '${CurrencyFormatter.format(progressAmount)} / ${CurrencyFormatter.format(goal.targetAmount)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
                     ),
                   ),
                 ],
@@ -196,7 +225,9 @@ class GoalsPage extends ConsumerWidget {
                 value: percentage,
                 minHeight: 8,
                 borderRadius: BorderRadius.circular(4),
-                backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                backgroundColor: isDark
+                    ? Colors.white12
+                    : Colors.grey.withValues(alpha: 0.2),
                 valueColor: const AlwaysStoppedAnimation<Color>(
                   AppTheme.primaryColor,
                 ),
@@ -214,9 +245,12 @@ class GoalsPage extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       predictionText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
+                        color: isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary,
                       ),
                     ),
                   ),
@@ -335,11 +369,13 @@ class GoalsPage extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) {
         final txnsAsync = ref.watch(goalTransactionsProvider(goal.id));
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return DraggableScrollableSheet(
           initialChildSize: 0.6,
@@ -348,6 +384,11 @@ class GoalsPage extends ConsumerWidget {
           expand: false,
           builder: (context, scrollController) {
             return Container(
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkCard : Colors.white,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,7 +398,7 @@ class GoalsPage extends ConsumerWidget {
                       width: 50,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: isDark ? Colors.white24 : Colors.grey.shade300,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -365,17 +406,22 @@ class GoalsPage extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     goal.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: isDark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Target: ${CurrencyFormatter.format(goal.targetAmount)} | Terkumpul: ${CurrencyFormatter.format(progressAmount)}',
-                    style: const TextStyle(
-                      color: AppTheme.lightTextSecondary,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                       fontSize: 13,
                     ),
                     textAlign: TextAlign.center,
@@ -397,9 +443,12 @@ class GoalsPage extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             predictionText,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
+                              color: isDark
+                                  ? AppTheme.darkTextPrimary
+                                  : AppTheme.lightTextPrimary,
                             ),
                           ),
                         ),
@@ -410,11 +459,14 @@ class GoalsPage extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Riwayat Tabungan',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
+                          color: isDark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
                         ),
                       ),
                       if (goal.status != 'archived')
@@ -464,12 +516,14 @@ class GoalsPage extends ConsumerWidget {
                     child: txnsAsync.when(
                       data: (txns) {
                         if (txns.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
                               'Belum ada transaksi untuk target ini.',
                               style: TextStyle(
                                 fontStyle: FontStyle.italic,
-                                color: AppTheme.lightTextSecondary,
+                                color: isDark
+                                    ? AppTheme.darkTextSecondary
+                                    : AppTheme.lightTextSecondary,
                               ),
                             ),
                           );
@@ -499,9 +553,19 @@ class GoalsPage extends ConsumerWidget {
                                 isDeposit
                                     ? 'Setoran Tabungan'
                                     : 'Penarikan Tabungan',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppTheme.darkTextPrimary
+                                      : AppTheme.lightTextPrimary,
+                                ),
                               ),
                               subtitle: Text(
                                 accAsync.value?.name ?? 'Memuat...',
+                                style: TextStyle(
+                                  color: isDark
+                                      ? AppTheme.darkTextSecondary
+                                      : AppTheme.lightTextSecondary,
+                                ),
                               ),
                               trailing: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -518,9 +582,11 @@ class GoalsPage extends ConsumerWidget {
                                   ),
                                   Text(
                                     '${txn.date.day}/${txn.date.month}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
-                                      color: AppTheme.lightTextSecondary,
+                                      color: isDark
+                                          ? AppTheme.darkTextSecondary
+                                          : AppTheme.lightTextSecondary,
                                     ),
                                   ),
                                 ],

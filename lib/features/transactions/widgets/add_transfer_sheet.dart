@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/finance_providers.dart';
-import '../../../core/providers.dart';
 import '../../../core/database/schemas/transfer.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -51,18 +50,6 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.lightTextPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -141,7 +128,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
@@ -157,7 +144,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -167,7 +154,11 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
                 widget.transfer != null
                     ? 'Edit Transfer Saldo'
                     : 'Perpindahan Dana (Transfer)',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -195,6 +186,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _fromAccountId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Dari Akun (Sumber)',
                       prefixIcon: Icon(Icons.logout_outlined),
@@ -226,6 +218,7 @@ class _AddTransferSheetState extends ConsumerState<AddTransferSheet> {
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _toAccountId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Ke Akun (Tujuan)',
                       prefixIcon: Icon(Icons.login_outlined),

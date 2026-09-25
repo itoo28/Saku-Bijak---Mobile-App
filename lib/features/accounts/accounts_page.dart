@@ -10,6 +10,8 @@ class AccountsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final accountsAsync = ref.watch(accountsProvider);
 
     return Scaffold(
@@ -36,14 +38,18 @@ class AccountsPage extends ConsumerWidget {
                   Icon(
                     Icons.account_balance_wallet_outlined,
                     size: 80,
-                    color: Colors.grey.withValues(alpha: 0.5),
+                    color: isDark
+                        ? Colors.white24
+                        : Colors.grey.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Belum ada akun terdaftar.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: AppTheme.lightTextSecondary,
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -65,12 +71,14 @@ class AccountsPage extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.all(24),
             children: [
-              const Text(
+              Text(
                 'Akun Aktif',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: AppTheme.lightTextSecondary,
+                  color: isDark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -80,12 +88,14 @@ class AccountsPage extends ConsumerWidget {
 
               if (archivedAccounts.isNotEmpty) ...[
                 const SizedBox(height: 32),
-                const Text(
+                Text(
                   'Akun Diarsipkan',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -267,77 +277,107 @@ class AccountsPage extends ConsumerWidget {
   }
 
   void _showAccountOptions(BuildContext context, WidgetRef ref, Account acc) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('Edit Nama & Warna'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAddEditAccountDialog(context, ref, account: acc);
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                acc.isArchived
-                    ? Icons.unarchive_outlined
-                    : Icons.archive_outlined,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.darkCard : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-              title: Text(
-                acc.isArchived ? 'Aktifkan Kembali' : 'Arsipkan Akun',
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                acc.isArchived = !acc.isArchived;
-                await ref.read(accountsProvider.notifier).updateAccount(acc);
-              },
-            ),
-            ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: AppTheme.expenseColor,
-              ),
-              title: const Text(
-                'Hapus Akun',
-                style: TextStyle(color: AppTheme.expenseColor),
-              ),
-              onTap: () async {
-                Navigator.pop(context);
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Hapus Akun'),
-                    content: const Text(
-                      'Apakah Anda yakin ingin menghapus akun ini? Akun dengan riwayat transaksi akan diarsipkan secara otomatis, sedangkan akun kosong akan dihapus permanen.',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Batal'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text(
-                          'Hapus',
-                          style: TextStyle(color: AppTheme.expenseColor),
-                        ),
-                      ),
-                    ],
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(
+                  Icons.edit_outlined,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                ),
+                title: Text(
+                  'Edit Nama & Warna',
+                  style: TextStyle(
+                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
                   ),
-                );
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAddEditAccountDialog(context, ref, account: acc);
+                },
+              ),
+              ListTile(
+                leading: Icon(
+                  acc.isArchived
+                      ? Icons.unarchive_outlined
+                      : Icons.archive_outlined,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                ),
+                title: Text(
+                  acc.isArchived ? 'Aktifkan Kembali' : 'Arsipkan Akun',
+                  style: TextStyle(
+                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                  ),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  acc.isArchived = !acc.isArchived;
+                  await ref.read(accountsProvider.notifier).updateAccount(acc);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: AppTheme.expenseColor,
+                ),
+                title: const Text(
+                  'Hapus Akun',
+                  style: TextStyle(color: AppTheme.expenseColor),
+                ),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Hapus Akun'),
+                      content: const Text(
+                        'Apakah Anda yakin ingin menghapus akun ini? Akun dengan riwayat transaksi akan diarsipkan secara otomatis, sedangkan akun kosong akan dihapus permanen.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Batal'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text(
+                            'Hapus',
+                            style: TextStyle(color: AppTheme.expenseColor),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
 
-                if (confirm == true) {
-                  await ref
-                      .read(accountsProvider.notifier)
-                      .deleteAccount(acc.id);
-                }
-              },
-            ),
-          ],
+                  if (confirm == true) {
+                    await ref
+                        .read(accountsProvider.notifier)
+                        .deleteAccount(acc.id);
+                  }
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -433,6 +473,7 @@ class _AddEditAccountDialogState
             ],
             DropdownButtonFormField<String>(
               initialValue: _type,
+              dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
               decoration: const InputDecoration(
                 labelText: 'Jenis Akun',
               ),
@@ -450,9 +491,12 @@ class _AddEditAccountDialogState
               },
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Pilih Warna Tema',
-              style: TextStyle(fontSize: 12, color: AppTheme.lightTextSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+              ),
             ),
             const SizedBox(height: 8),
             Wrap(

@@ -112,9 +112,9 @@ class _SetupPinPageState extends ConsumerState<SetupPinPage> {
                   ? 'Masukkan PIN 6-digit sekali lagi'
                   : 'PIN ini akan digunakan untuk mengunci aplikasi Anda',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppTheme.lightTextSecondary,
+                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
               ),
             ),
             const Spacer(),

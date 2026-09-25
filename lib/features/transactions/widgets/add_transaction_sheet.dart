@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/finance_providers.dart';
-import '../../../core/providers.dart';
 import '../../../core/database/schemas/transaction.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -57,18 +56,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.lightTextPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -188,7 +175,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
@@ -204,7 +191,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -218,9 +205,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                     : (widget.type == 'income'
                         ? 'Catat Pemasukan'
                         : 'Catat Pengeluaran'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -249,6 +237,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _selectedAccountId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Akun / Dompet',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),
@@ -277,6 +266,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                 data: (categories) {
                   return DropdownButtonFormField<int>(
                     initialValue: _selectedCategoryId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Kategori',
                       prefixIcon: Icon(Icons.category_outlined),

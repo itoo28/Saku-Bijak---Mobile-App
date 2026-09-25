@@ -153,9 +153,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         Text(
                           slide['desc']!,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: AppTheme.lightTextSecondary,
+                            color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
                             height: 1.5,
                           ),
                         ),

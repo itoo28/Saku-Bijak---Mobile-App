@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../core/finance_providers.dart';
-import '../../core/providers.dart';
 import '../../core/database/schemas/transaction.dart';
 import '../../core/database/schemas/transfer.dart';
 import '../../core/database/schemas/goal.dart';
@@ -206,14 +205,14 @@ class DashboardPage extends ConsumerWidget {
                             color: AppTheme.expenseColor.withValues(alpha: 0.3),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.warning_amber_rounded,
                               color: AppTheme.expenseColor,
                               size: 28,
                             ),
-                            SizedBox(width: 12),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,14 +222,19 @@ class DashboardPage extends ConsumerWidget {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
+                                      color: isDark
+                                          ? AppTheme.darkTextPrimary
+                                          : AppTheme.lightTextPrimary,
                                     ),
                                   ),
-                                  SizedBox(height: 2),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Lakukan ekspor backup agar data Anda aman jika HP rusak atau hilang.',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: AppTheme.lightTextSecondary,
+                                      color: isDark
+                                          ? AppTheme.darkTextSecondary
+                                          : AppTheme.lightTextSecondary,
                                     ),
                                   ),
                                 ],
@@ -259,9 +263,12 @@ class DashboardPage extends ConsumerWidget {
                               children: [
                                 Text(
                                   'Bulan Ini (${_getMonthName(now.month)})',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
+                                    color: isDark
+                                        ? AppTheme.darkTextPrimary
+                                        : AppTheme.lightTextPrimary,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -270,6 +277,7 @@ class DashboardPage extends ConsumerWidget {
                                   amount: monthlyIncome,
                                   color: AppTheme.secondaryColor,
                                   icon: Icons.arrow_downward,
+                                  isDark: isDark,
                                 ),
                                 const SizedBox(height: 12),
                                 _buildSummaryItem(
@@ -277,17 +285,20 @@ class DashboardPage extends ConsumerWidget {
                                   amount: monthlyExpense,
                                   color: AppTheme.expenseColor,
                                   icon: Icons.arrow_upward,
+                                  isDark: isDark,
                                 ),
                               ],
                             ),
                             // Health Score Gauge
                             Column(
                               children: [
-                                const Text(
+                                Text(
                                   'Health Score',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.lightTextSecondary,
+                                    color: isDark
+                                        ? AppTheme.darkTextSecondary
+                                        : AppTheme.lightTextSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -313,9 +324,12 @@ class DashboardPage extends ConsumerWidget {
                                     ),
                                     Text(
                                       '${healthScoreAsync.value ?? 0}',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? AppTheme.darkTextPrimary
+                                            : AppTheme.lightTextPrimary,
                                       ),
                                     ),
                                   ],
@@ -333,11 +347,17 @@ class DashboardPage extends ConsumerWidget {
               const SizedBox(height: 24),
 
               // Quick Actions Section
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
                   'Aksi Cepat',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark
+                        ? AppTheme.darkTextPrimary
+                        : AppTheme.lightTextPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -379,11 +399,14 @@ class DashboardPage extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Target Tabungan Aktif',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: isDark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary,
                       ),
                     ),
                     TextButton(
@@ -394,20 +417,26 @@ class DashboardPage extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildActiveGoals(context, ref, goalsAsync),
+              _buildActiveGoals(context, ref, goalsAsync, isDark),
 
               const SizedBox(height: 28),
 
               // Recent Transactions Section
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Text(
                   'Transaksi Terakhir',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: isDark
+                        ? AppTheme.darkTextPrimary
+                        : AppTheme.lightTextPrimary,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              _buildRecentTransactions(context, ref),
+              _buildRecentTransactions(context, ref, isDark),
 
               const SizedBox(height: 48),
             ]),
@@ -464,6 +493,7 @@ class DashboardPage extends ConsumerWidget {
     required int amount,
     required Color color,
     required IconData icon,
+    bool isDark = false,
   }) {
     return Row(
       children: [
@@ -481,8 +511,10 @@ class DashboardPage extends ConsumerWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: AppTheme.lightTextSecondary,
+              style: TextStyle(
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
                 fontSize: 11,
               ),
             ),
@@ -520,7 +552,7 @@ class DashboardPage extends ConsumerWidget {
               color: isDark ? AppTheme.darkCard : Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade100,
+                color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
               ),
             ),
             child: Column(
@@ -529,9 +561,12 @@ class DashboardPage extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
+                    color: isDark
+                        ? AppTheme.darkTextPrimary
+                        : AppTheme.lightTextPrimary,
                   ),
                 ),
               ],
@@ -546,6 +581,7 @@ class DashboardPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AsyncValue<List<Goal>> goalsAsync,
+    bool isDark,
   ) {
     return goalsAsync.when(
       data: (goals) {
@@ -553,12 +589,14 @@ class DashboardPage extends ConsumerWidget {
             .where((g) => g.status == 'active' || g.status == 'overdue')
             .toList();
         if (activeGoals.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Text(
               'Belum ada target tabungan aktif.',
               style: TextStyle(
-                color: AppTheme.lightTextSecondary,
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -594,9 +632,12 @@ class DashboardPage extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 goal.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
+                                  color: isDark
+                                      ? AppTheme.darkTextPrimary
+                                      : AppTheme.lightTextPrimary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -629,16 +670,21 @@ class DashboardPage extends ConsumerWidget {
                           children: [
                             Text(
                               'Progress: ${(percentage * 100).toStringAsFixed(0)}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: AppTheme.lightTextSecondary,
+                                color: isDark
+                                    ? AppTheme.darkTextSecondary
+                                    : AppTheme.lightTextSecondary,
                               ),
                             ),
                             Text(
                               '${CurrencyFormatter.format(progressAmount)} / ${CurrencyFormatter.format(goal.targetAmount)}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppTheme.darkTextPrimary
+                                    : AppTheme.lightTextPrimary,
                               ),
                             ),
                           ],
@@ -646,7 +692,9 @@ class DashboardPage extends ConsumerWidget {
                         const SizedBox(height: 6),
                         LinearProgressIndicator(
                           value: percentage,
-                          backgroundColor: Colors.grey.withValues(alpha: 0.2),
+                          backgroundColor: isDark
+                              ? Colors.white12
+                              : Colors.grey.withValues(alpha: 0.2),
                           valueColor: const AlwaysStoppedAnimation<Color>(
                             AppTheme.primaryColor,
                           ),
@@ -694,18 +742,24 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentTransactions(BuildContext context, WidgetRef ref) {
+  Widget _buildRecentTransactions(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDark,
+  ) {
     final mergedAsync = ref.watch(mergedTransactionsProvider);
 
     return mergedAsync.when(
       data: (merged) {
         if (merged.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Text(
               'Belum ada transaksi dicatat.',
               style: TextStyle(
-                color: AppTheme.lightTextSecondary,
+                color: isDark
+                    ? AppTheme.darkTextSecondary
+                    : AppTheme.lightTextSecondary,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -713,7 +767,6 @@ class DashboardPage extends ConsumerWidget {
         }
 
         final recent = merged.take(10).toList();
-        final isDark = Theme.of(context).brightness == Brightness.dark;
 
         return ListView.builder(
           shrinkWrap: true,
@@ -737,7 +790,7 @@ class DashboardPage extends ConsumerWidget {
                   border: Border.all(
                     color: isDark
                         ? const Color(0xFF2C2454)
-                        : Colors.grey.shade100,
+                        : Colors.grey.shade200,
                   ),
                 ),
                 child: InkWell(
@@ -773,16 +826,21 @@ class DashboardPage extends ConsumerWidget {
                           children: [
                             Text(
                               categoryAsync.value?.name ?? 'Memuat...',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
+                                color: isDark
+                                    ? AppTheme.darkTextPrimary
+                                    : AppTheme.lightTextPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               accountAsync.value?.name ?? 'Memuat...',
-                              style: const TextStyle(
-                                color: AppTheme.lightTextSecondary,
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppTheme.darkTextSecondary
+                                    : AppTheme.lightTextSecondary,
                                 fontSize: 11,
                               ),
                             ),
@@ -805,8 +863,10 @@ class DashboardPage extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${item.date.day}/${item.date.month}',
-                            style: const TextStyle(
-                              color: AppTheme.lightTextSecondary,
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppTheme.darkTextSecondary
+                                  : AppTheme.lightTextSecondary,
                               fontSize: 11,
                             ),
                           ),
@@ -832,7 +892,7 @@ class DashboardPage extends ConsumerWidget {
                   border: Border.all(
                     color: isDark
                         ? const Color(0xFF2C2454)
-                        : Colors.grey.shade100,
+                        : Colors.grey.shade200,
                   ),
                 ),
                 child: InkWell(
@@ -857,18 +917,23 @@ class DashboardPage extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Perpindahan Dana',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
+                                color: isDark
+                                    ? AppTheme.darkTextPrimary
+                                    : AppTheme.lightTextPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               '${fromAccountAsync.value?.name ?? '...'} → ${toAccountAsync.value?.name ?? '...'}',
-                              style: const TextStyle(
-                                color: AppTheme.lightTextSecondary,
+                              style: TextStyle(
+                                color: isDark
+                                    ? AppTheme.darkTextSecondary
+                                    : AppTheme.lightTextSecondary,
                                 fontSize: 11,
                               ),
                             ),
@@ -889,8 +954,10 @@ class DashboardPage extends ConsumerWidget {
                           const SizedBox(height: 2),
                           Text(
                             '${trf.date.day}/${trf.date.month}',
-                            style: const TextStyle(
-                              color: AppTheme.lightTextSecondary,
+                            style: TextStyle(
+                              color: isDark
+                                  ? AppTheme.darkTextSecondary
+                                  : AppTheme.lightTextSecondary,
                               fontSize: 11,
                             ),
                           ),

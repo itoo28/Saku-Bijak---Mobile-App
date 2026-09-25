@@ -34,18 +34,6 @@ class _AddGoalSheetState extends ConsumerState<AddGoalSheet> {
       initialDate: DateTime.now().add(const Duration(days: 30)),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppTheme.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: AppTheme.lightTextPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
@@ -95,7 +83,7 @@ class _AddGoalSheetState extends ConsumerState<AddGoalSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
@@ -111,15 +99,19 @@ class _AddGoalSheetState extends ConsumerState<AddGoalSheet> {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Buat Target Menabung Baru',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),

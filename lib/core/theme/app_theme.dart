@@ -26,20 +26,28 @@ class AppTheme {
       brightness: Brightness.light,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: lightBg,
+      cardColor: lightCard,
+      canvasColor: lightCard,
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: Color(0xFF8B5CF6),
         tertiary: Color(0xFFFFC0E4),
         surface: lightBg,
+        surfaceContainerLowest: Colors.white,
+        surfaceContainerLow: Colors.white,
+        surfaceContainer: Colors.white,
+        surfaceContainerHigh: lightBg,
+        surfaceContainerHighest: Color(0xFFF0F0F5),
         onSurface: lightTextPrimary,
         error: expenseColor,
       ),
       cardTheme: CardThemeData(
         color: lightCard,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.grey.shade100, width: 1),
+          side: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
       ),
       appBarTheme: const AppBarTheme(
@@ -59,6 +67,71 @@ class AppTheme {
         unselectedItemColor: lightTextSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 10,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: lightCard,
+        elevation: 10,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: primaryLight,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: primaryColor);
+          }
+          return const IconThemeData(color: lightTextSecondary);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: primaryColor,
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+            color: lightTextSecondary,
+          );
+        }),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: lightCard,
+        modalBackgroundColor: lightCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: lightCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titleTextStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: lightTextPrimary,
+        ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        indicatorColor: primaryColor,
+        labelColor: primaryColor,
+        unselectedLabelColor: lightTextSecondary,
+        dividerColor: Color(0xFFEEEEEE),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.grey.shade200,
+        thickness: 1,
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: lightTextSecondary,
+        textColor: lightTextPrimary,
+      ),
+      datePickerTheme: const DatePickerThemeData(
+        headerBackgroundColor: primaryColor,
+        headerForegroundColor: Colors.white,
+        backgroundColor: lightCard,
+        surfaceTintColor: Colors.transparent,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -103,16 +176,24 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: darkBg,
+      cardColor: darkCard,
+      canvasColor: darkCard,
       colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: Color(0xFF9F75FF),
         tertiary: Color(0xFFFFD4EC),
         surface: darkBg,
+        surfaceContainerLowest: darkBg,
+        surfaceContainerLow: darkCard,
+        surfaceContainer: darkCard,
+        surfaceContainerHigh: Color(0xFF261F48),
+        surfaceContainerHighest: Color(0xFF2F2757),
         onSurface: darkTextPrimary,
         error: expenseColor,
       ),
       cardTheme: CardThemeData(
         color: darkCard,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
@@ -136,6 +217,71 @@ class AppTheme {
         unselectedItemColor: darkTextSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 10,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: darkCard,
+        elevation: 10,
+        shadowColor: Colors.black.withValues(alpha: 0.35),
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: const Color(0xFF2C2454),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: Color(0xFF9F75FF));
+          }
+          return const IconThemeData(color: darkTextSecondary);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF9F75FF),
+            );
+          }
+          return const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.normal,
+            color: darkTextSecondary,
+          );
+        }),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: darkCard,
+        modalBackgroundColor: darkCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: darkCard,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titleTextStyle: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: darkTextPrimary,
+        ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        indicatorColor: primaryColor,
+        labelColor: Color(0xFF9F75FF),
+        unselectedLabelColor: darkTextSecondary,
+        dividerColor: Color(0xFF2C2454),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF2C2454),
+        thickness: 1,
+      ),
+      listTileTheme: const ListTileThemeData(
+        iconColor: darkTextSecondary,
+        textColor: darkTextPrimary,
+      ),
+      datePickerTheme: const DatePickerThemeData(
+        headerBackgroundColor: primaryColor,
+        headerForegroundColor: Colors.white,
+        backgroundColor: darkCard,
+        surfaceTintColor: Colors.transparent,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

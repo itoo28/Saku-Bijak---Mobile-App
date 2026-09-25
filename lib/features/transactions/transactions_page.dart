@@ -33,6 +33,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final transactionsAsync = ref.watch(transactionsProvider);
     final transfersAsync = ref.watch(transfersProvider);
 
@@ -42,8 +44,11 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.lightTextSecondary,
+          labelColor: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
+          unselectedLabelColor:
+              isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+          dividerColor:
+              isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
           tabs: const [
             Tab(text: 'Semua'),
             Tab(text: 'Masuk'),
@@ -56,24 +61,24 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         controller: _tabController,
         children: [
           // All
-          _buildAllList(ref),
+          _buildAllList(ref, isDark),
           // Incomes
-          _buildFilteredList(ref, transactionsAsync, 'income'),
+          _buildFilteredList(ref, transactionsAsync, 'income', isDark),
           // Expenses
-          _buildFilteredList(ref, transactionsAsync, 'expense'),
+          _buildFilteredList(ref, transactionsAsync, 'expense', isDark),
           // Transfers
-          _buildTransfersList(ref, transfersAsync),
+          _buildTransfersList(ref, transfersAsync, isDark),
         ],
       ),
     );
   }
 
-  Widget _buildAllList(WidgetRef ref) {
+  Widget _buildAllList(WidgetRef ref, bool isDark) {
     final mergedAsync = ref.watch(mergedTransactionsProvider);
 
     return mergedAsync.when(
       data: (merged) {
-        if (merged.isEmpty) return _buildEmptyState();
+        if (merged.isEmpty) return _buildEmptyState(isDark);
 
         return ListView.builder(
           padding: const EdgeInsets.all(24),
@@ -81,9 +86,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
           itemBuilder: (context, index) {
             final item = merged[index];
             if (item is schema.Transaction) {
-              return _buildTransactionItem(context, ref, item);
+              return _buildTransactionItem(context, ref, item, isDark);
             } else {
-              return _buildTransferItem(context, ref, item as Transfer);
+              return _buildTransferItem(context, ref, item as Transfer, isDark);
             }
           },
         );
@@ -97,17 +102,18 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
     WidgetRef ref,
     AsyncValue<List<schema.Transaction>> txnsAsync,
     String type,
+    bool isDark,
   ) {
     return txnsAsync.when(
       data: (txns) {
         final filtered = txns.where((t) => t.type == type).toList();
-        if (filtered.isEmpty) return _buildEmptyState();
+        if (filtered.isEmpty) return _buildEmptyState(isDark);
 
         return ListView.builder(
           padding: const EdgeInsets.all(24),
           itemCount: filtered.length,
           itemBuilder: (context, index) =>
-              _buildTransactionItem(context, ref, filtered[index]),
+              _buildTransactionItem(context, ref, filtered[index], isDark),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -118,16 +124,17 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
   Widget _buildTransfersList(
     WidgetRef ref,
     AsyncValue<List<Transfer>> transfersAsync,
+    bool isDark,
   ) {
     return transfersAsync.when(
       data: (transfers) {
-        if (transfers.isEmpty) return _buildEmptyState();
+        if (transfers.isEmpty) return _buildEmptyState(isDark);
 
         return ListView.builder(
           padding: const EdgeInsets.all(24),
           itemCount: transfers.length,
           itemBuilder: (context, index) =>
-              _buildTransferItem(context, ref, transfers[index]),
+              _buildTransferItem(context, ref, transfers[index], isDark),
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -136,7 +143,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -144,12 +151,17 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
           Icon(
             Icons.history_toggle_off_outlined,
             size: 80,
-            color: Colors.grey.withValues(alpha: 0.5),
+            color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Tidak ada riwayat transaksi.',
-            style: TextStyle(fontSize: 15, color: AppTheme.lightTextSecondary),
+            style: TextStyle(
+              fontSize: 15,
+              color: isDark
+                  ? AppTheme.darkTextSecondary
+                  : AppTheme.lightTextSecondary,
+            ),
           ),
         ],
       ),
@@ -160,9 +172,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
     BuildContext context,
     WidgetRef ref,
     schema.Transaction t,
+    bool isDark,
   ) {
     final isIncome = t.type == 'income';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final categoryAsync = ref.watch(categoryByIdProvider(t.categoryId));
     final accountAsync = ref.watch(accountByIdProvider(t.accountId));
@@ -174,7 +186,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         color: isDark ? AppTheme.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade100,
+          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
         ),
       ),
       child: InkWell(
@@ -206,16 +218,21 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                 children: [
                   Text(
                     categoryAsync.value?.name ?? 'Memuat...',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                      color: isDark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     accountAsync.value?.name ?? 'Memuat...',
-                    style: const TextStyle(
-                      color: AppTheme.lightTextSecondary,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -223,9 +240,10 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                     const SizedBox(height: 4),
                     Text(
                       t.note,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
+                        color: isDark ? Colors.white70 : Colors.black87,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -250,8 +268,10 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                 const SizedBox(height: 2),
                 Text(
                   '${t.date.day}/${t.date.month}/${t.date.year}',
-                  style: const TextStyle(
-                    color: AppTheme.lightTextSecondary,
+                  style: TextStyle(
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -260,7 +280,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
             const SizedBox(width: 4),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
-              color: AppTheme.lightTextSecondary,
+              color: isDark
+                  ? AppTheme.darkTextSecondary
+                  : AppTheme.lightTextSecondary,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               tooltip: 'Edit Transaksi',
@@ -272,9 +294,12 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
     );
   }
 
-  Widget _buildTransferItem(BuildContext context, WidgetRef ref, Transfer t) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+  Widget _buildTransferItem(
+    BuildContext context,
+    WidgetRef ref,
+    Transfer t,
+    bool isDark,
+  ) {
     final fromAccountAsync = ref.watch(accountByIdProvider(t.fromAccountId));
     final toAccountAsync = ref.watch(accountByIdProvider(t.toAccountId));
 
@@ -285,7 +310,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
         color: isDark ? AppTheme.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade100,
+          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
         ),
       ),
       child: InkWell(
@@ -311,15 +336,23 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Perpindahan Dana (Transfer)',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: isDark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${fromAccountAsync.value?.name ?? 'Memuat...'} → ${toAccountAsync.value?.name ?? 'Memuat...'}',
-                    style: const TextStyle(
-                      color: AppTheme.lightTextSecondary,
+                    style: TextStyle(
+                      color: isDark
+                          ? AppTheme.darkTextSecondary
+                          : AppTheme.lightTextSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -327,9 +360,10 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                     const SizedBox(height: 4),
                     Text(
                       t.note,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
+                        color: isDark ? Colors.white70 : Colors.black87,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -352,8 +386,10 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                 const SizedBox(height: 2),
                 Text(
                   '${t.date.day}/${t.date.month}/${t.date.year}',
-                  style: const TextStyle(
-                    color: AppTheme.lightTextSecondary,
+                  style: TextStyle(
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -362,7 +398,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
             const SizedBox(width: 4),
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
-              color: AppTheme.lightTextSecondary,
+              color: isDark
+                  ? AppTheme.darkTextSecondary
+                  : AppTheme.lightTextSecondary,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               tooltip: 'Edit Transfer',

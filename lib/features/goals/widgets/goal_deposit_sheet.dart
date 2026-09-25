@@ -86,7 +86,7 @@ class _GoalDepositSheetState extends ConsumerState<GoalDepositSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
@@ -102,7 +102,7 @@ class _GoalDepositSheetState extends ConsumerState<GoalDepositSheet> {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -110,9 +110,10 @@ class _GoalDepositSheetState extends ConsumerState<GoalDepositSheet> {
               const SizedBox(height: 16),
               Text(
                 'Nabung untuk: ${widget.goal.name}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -141,6 +142,7 @@ class _GoalDepositSheetState extends ConsumerState<GoalDepositSheet> {
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _selectedAccountId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Pilih Sumber Dana (Akun)',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),

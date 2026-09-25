@@ -120,7 +120,7 @@ class _GoalWithdrawSheetState extends ConsumerState<GoalWithdrawSheet> {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.darkBg : Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(24),
@@ -136,7 +136,7 @@ class _GoalWithdrawSheetState extends ConsumerState<GoalWithdrawSheet> {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: isDark ? Colors.white24 : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -144,9 +144,10 @@ class _GoalWithdrawSheetState extends ConsumerState<GoalWithdrawSheet> {
               const SizedBox(height: 16),
               Text(
                 'Tarik Dana dari: ${widget.goal.name}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -159,6 +160,7 @@ class _GoalWithdrawSheetState extends ConsumerState<GoalWithdrawSheet> {
                       .toList();
                   return DropdownButtonFormField<int>(
                     initialValue: _selectedAccountId,
+                    dropdownColor: isDark ? AppTheme.darkCard : Colors.white,
                     decoration: const InputDecoration(
                       labelText: 'Kembalikan Ke Rekening / Dompet',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),

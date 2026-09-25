@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/theme/theme_provider.dart';
 import 'dashboard/dashboard_page.dart';
 import 'accounts/accounts_page.dart';
 import 'transactions/transactions_page.dart';
@@ -16,20 +17,25 @@ class MainLayout extends ConsumerStatefulWidget {
 class _MainLayoutState extends ConsumerState<MainLayout> {
   int _selectedIndex = 0;
 
-  final List<Widget> _pages = const [
-    DashboardPage(),
-    AccountsPage(),
-    TransactionsPage(),
-    GoalsPage(),
-    SettingsPage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    const pages = [
+      DashboardPage(),
+      AccountsPage(),
+      TransactionsPage(),
+      GoalsPage(),
+      SettingsPage(),
+    ];
+
     return Scaffold(
       body: IndexedStack(
+        key: ValueKey('main_stack_${themeMode.name}_$isDark'),
         index: _selectedIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,

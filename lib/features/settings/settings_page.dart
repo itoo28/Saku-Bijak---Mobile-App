@@ -288,6 +288,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final currentThemeMode = ref.watch(themeModeProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textSecondaryColor = isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary;
 
     return Scaffold(
       appBar: AppBar(
@@ -297,7 +300,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         padding: const EdgeInsets.all(24),
         children: [
           // Theme settings
-          const Text('Tampilan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          Text('Tampilan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textSecondaryColor)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -348,7 +351,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 24),
 
           // Security settings
-          const Text('Keamanan Lokal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          Text('Keamanan Lokal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textSecondaryColor)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -373,7 +376,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 24),
 
           // Backup & Restore
-          const Text('Cadangan & Pemulihan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          Text('Cadangan & Pemulihan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textSecondaryColor)),
           const SizedBox(height: 8),
           Card(
             child: Column(
@@ -397,7 +400,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 24),
 
           // Tentang Aplikasi
-          const Text('Tentang Aplikasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          Text('Tentang Aplikasi', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textSecondaryColor)),
           const SizedBox(height: 8),
           Card(
             child: Padding(
@@ -423,23 +426,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Saku Bijak',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                          ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'Versi 1.0.0 • 100% Offline & Privat',
-                          style: TextStyle(fontSize: 12, color: AppTheme.lightTextSecondary),
+                          style: TextStyle(fontSize: 12, color: textSecondaryColor),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Kelola keuangan bijak tanpa cloud, bebas risiko kebocoran data.',
-                          style: TextStyle(fontSize: 11, color: AppTheme.lightTextSecondary),
+                          style: TextStyle(fontSize: 11, color: textSecondaryColor),
                         ),
                       ],
                     ),
@@ -452,7 +459,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           const SizedBox(height: 24),
 
           // Reset Data
-          const Text('Zona Bahaya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.lightTextSecondary)),
+          Text('Zona Bahaya', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textSecondaryColor)),
           const SizedBox(height: 8),
           Card(
             color: AppTheme.expenseColor.withValues(alpha: 0.08),
@@ -607,7 +614,9 @@ class _PasswordInputDialogState extends State<_PasswordInputDialog> {
               fontSize: 12,
               color: widget.isWarning
                   ? AppTheme.expenseColor
-                  : AppTheme.lightTextSecondary,
+                  : (Theme.of(context).brightness == Brightness.dark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary),
               fontWeight:
                   widget.isWarning ? FontWeight.bold : FontWeight.normal,
             ),

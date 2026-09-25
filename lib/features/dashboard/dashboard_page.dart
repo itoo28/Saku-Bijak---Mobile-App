@@ -6,7 +6,6 @@ import '../../core/database/schemas/transaction.dart';
 import '../../core/database/schemas/transfer.dart';
 import '../../core/database/schemas/goal.dart';
 import '../../core/utils/currency_formatter.dart';
-import '../../core/utils/health_score_calculator.dart';
 import '../../core/theme/app_theme.dart';
 import '../transactions/widgets/add_transaction_sheet.dart';
 import '../transactions/widgets/add_transfer_sheet.dart';
@@ -41,7 +40,6 @@ class DashboardPage extends ConsumerWidget {
     final accountsAsync = ref.watch(accountsProvider);
     final transactionsAsync = ref.watch(transactionsProvider);
     final goalsAsync = ref.watch(goalsProvider);
-    final healthScoreAsync = ref.watch(financialHealthScoreProvider);
     final showBackupReminderAsync = ref.watch(backupReminderProvider);
 
     final theme = Theme.of(context);
@@ -82,31 +80,47 @@ class DashboardPage extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Premium Header with Purple Gradient
+          // Premium Header with Purple Gradient & Semi-Rounded Shape
           SliverAppBar(
-            expandedHeight: 310,
+            expandedHeight: 315,
             floating: false,
             pinned: true,
+            elevation: 3,
+            shadowColor: Colors.black.withValues(alpha: 0.15),
+            backgroundColor: const Color(0xFF5324C4),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(32),
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF5324C4),
-                      AppTheme.primaryColor,
-                      Color(0xFF8C52FF),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+              background: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(32),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 60.0,
-                    left: 24,
-                    right: 24,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF5324C4),
+                        AppTheme.primaryColor,
+                        Color(0xFF8C52FF),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(32),
+                    ),
                   ),
-                  child: Column(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: 60.0,
+                      left: 24,
+                      right: 24,
+                      bottom: 20.0,
+                    ),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
@@ -210,15 +224,17 @@ class DashboardPage extends ConsumerWidget {
               ),
             ),
           ),
+        ),
 
           // Core Dashboard Content
           SliverList(
             delegate: SliverChildListDelegate([
+              const SizedBox(height: 16),
               // Backup reminder banner
               showBackupReminderAsync.maybeWhen(
                 data: (show) => show
                     ? Container(
-                        margin: const EdgeInsets.all(24),
+                        margin: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: AppTheme.expenseColor.withValues(alpha: 0.08),
@@ -269,144 +285,149 @@ class DashboardPage extends ConsumerWidget {
                 orElse: () => const SizedBox(),
               ),
 
-              // Summary card for current month (Income vs Expense & Health Score)
+              // Summary card for current month (Income vs Expense & Laporan Shortcut)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Bulan Ini (${_getMonthName(now.month)})',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: isDark
-                                          ? AppTheme.darkTextPrimary
-                                          : AppTheme.lightTextPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 12),
-                                _buildSummaryItem(
-                                  label: 'Pemasukan',
-                                  amount: monthlyIncome,
-                                  color: AppTheme.secondaryColor,
-                                  icon: Icons.arrow_downward,
-                                  isDark: isDark,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Bulan Ini (${_getMonthName(now.month)})',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: isDark
+                                      ? AppTheme.darkTextPrimary
+                                      : AppTheme.lightTextPrimary,
                                 ),
-                                const SizedBox(height: 12),
-                                _buildSummaryItem(
-                                  label: 'Pengeluaran',
-                                  amount: monthlyExpense,
-                                  color: AppTheme.expenseColor,
-                                  icon: Icons.arrow_upward,
-                                  isDark: isDark,
-                                ),
-                              ],
-                            ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildSummaryItem(
+                                label: 'Pemasukan',
+                                amount: monthlyIncome,
+                                color: AppTheme.secondaryColor,
+                                icon: Icons.arrow_downward,
+                                isDark: isDark,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildSummaryItem(
+                                label: 'Pengeluaran',
+                                amount: monthlyExpense,
+                                color: AppTheme.expenseColor,
+                                icon: Icons.arrow_upward,
+                                isDark: isDark,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          // Health Score Gauge
-                          Column(
-                              children: [
-                                Text(
-                                  'Health Score',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppTheme.darkTextSecondary
-                                        : AppTheme.lightTextSecondary,
+                        ),
+                        const SizedBox(width: 16),
+                        // Tombol Aksi Laporan Pengganti Health Score
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ReportsPage(),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withValues(
+                                  alpha: isDark ? 0.22 : 0.08,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: AppTheme.primaryColor.withValues(
+                                    alpha: isDark ? 0.4 : 0.22,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    SizedBox(
-                                      width: 80,
-                                      height: 80,
-                                      child: CircularProgressIndicator(
-                                        value:
-                                            (healthScoreAsync.value ?? 50) /
-                                            100,
-                                        strokeWidth: 8,
-                                        backgroundColor: isDark
-                                            ? Colors.grey.shade800
-                                            : Colors.grey.shade200,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation<Color>(
-                                              AppTheme.primaryColor,
-                                            ),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 46,
+                                    height: 46,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [
+                                          Color(0xFF5324C4),
+                                          AppTheme.primaryColor,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
                                       ),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppTheme.primaryColor
+                                              .withValues(alpha: 0.35),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      '${healthScoreAsync.value ?? 0}',
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
+                                    child: const Icon(
+                                      Icons.bar_chart_rounded,
+                                      color: Colors.white,
+                                      size: 26,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Laporan',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? AppTheme.darkTextPrimary
+                                              : AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Icon(
+                                        Icons.chevron_right_rounded,
+                                        size: 16,
                                         color: isDark
                                             ? AppTheme.darkTextPrimary
-                                            : AppTheme.lightTextPrimary,
+                                            : AppTheme.primaryColor,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Divider(
-                          height: 1,
-                          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
-                        ),
-                        const SizedBox(height: 10),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ReportsPage(),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.bar_chart_rounded,
-                                  color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Buka Laporan & Analisis Lengkap',
-                                  style: TextStyle(
-                                    color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
-                                  size: 18,
-                                ),
-                              ],
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Lihat Grafik',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                      color: isDark
+                                          ? AppTheme.darkTextSecondary
+                                          : AppTheme.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

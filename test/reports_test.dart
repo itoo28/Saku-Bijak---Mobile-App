@@ -72,8 +72,8 @@ void main() {
     });
 
     test('4. Grouping by category aggregates totals and percentage calculation accurately', () {
-      final catFood = 1;
-      final catTransport = 2;
+      const catFood = 1;
+      const catTransport = 2;
 
       final transactions = [
         Transaction()..amount = 70000..categoryId = catFood..type = 'expense',

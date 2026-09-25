@@ -153,12 +153,16 @@ class DashboardPage extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        CurrencyFormatter.format(totalAssets),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          CurrencyFormatter.format(totalAssets),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -258,20 +262,23 @@ class DashboardPage extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Bulan Ini (${_getMonthName(now.month)})',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: isDark
-                                        ? AppTheme.darkTextPrimary
-                                        : AppTheme.lightTextPrimary,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Bulan Ini (${_getMonthName(now.month)})',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: isDark
+                                          ? AppTheme.darkTextPrimary
+                                          : AppTheme.lightTextPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                 _buildSummaryItem(
                                   label: 'Pemasukan',
                                   amount: monthlyIncome,
@@ -289,8 +296,10 @@ class DashboardPage extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                            // Health Score Gauge
-                            Column(
+                          ),
+                          const SizedBox(width: 16),
+                          // Health Score Gauge
+                          Column(
                               children: [
                                 Text(
                                   'Health Score',
@@ -464,23 +473,31 @@ class DashboardPage extends ConsumerWidget {
             children: [
               Icon(icon, color: Colors.white70, size: 16),
               const SizedBox(width: 6),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            CurrencyFormatter.format(amount),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              CurrencyFormatter.format(amount),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -506,27 +523,35 @@ class DashboardPage extends ConsumerWidget {
           child: Icon(icon, color: color, size: 16),
         ),
         const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isDark
-                    ? AppTheme.darkTextSecondary
-                    : AppTheme.lightTextSecondary,
-                fontSize: 11,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: isDark
+                      ? AppTheme.darkTextSecondary
+                      : AppTheme.lightTextSecondary,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            Text(
-              CurrencyFormatter.format(amount),
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: color,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  CurrencyFormatter.format(amount),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -618,7 +643,7 @@ class DashboardPage extends ConsumerWidget {
                   : 0.0;
 
               return Container(
-                width: 260,
+                width: 280,
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 child: Card(
                   child: Padding(
@@ -666,25 +691,31 @@ class DashboardPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               'Progress: ${(percentage * 100).toStringAsFixed(0)}%',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 color: isDark
                                     ? AppTheme.darkTextSecondary
                                     : AppTheme.lightTextSecondary,
                               ),
                             ),
-                            Text(
-                              '${CurrencyFormatter.format(progressAmount)} / ${CurrencyFormatter.format(goal.targetAmount)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: isDark
-                                    ? AppTheme.darkTextPrimary
-                                    : AppTheme.lightTextPrimary,
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  '${CurrencyFormatter.format(progressAmount)} / ${CurrencyFormatter.format(goal.targetAmount)}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? AppTheme.darkTextPrimary
+                                        : AppTheme.lightTextPrimary,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -833,6 +864,8 @@ class DashboardPage extends ConsumerWidget {
                                     ? AppTheme.darkTextPrimary
                                     : AppTheme.lightTextPrimary,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -843,6 +876,8 @@ class DashboardPage extends ConsumerWidget {
                                     : AppTheme.lightTextSecondary,
                                 fontSize: 11,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -850,14 +885,18 @@ class DashboardPage extends ConsumerWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            '${isIncome ? '+' : '-'}${CurrencyFormatter.format(item.amount)}',
-                            style: TextStyle(
-                              color: isIncome
-                                  ? AppTheme.secondaryColor
-                                  : AppTheme.expenseColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              '${isIncome ? '+' : '-'}${CurrencyFormatter.format(item.amount)}',
+                              style: TextStyle(
+                                color: isIncome
+                                    ? AppTheme.secondaryColor
+                                    : AppTheme.expenseColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -936,6 +975,8 @@ class DashboardPage extends ConsumerWidget {
                                     : AppTheme.lightTextSecondary,
                                 fontSize: 11,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -943,12 +984,16 @@ class DashboardPage extends ConsumerWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Text(
-                            CurrencyFormatter.format(trf.amount),
-                            style: const TextStyle(
-                              color: AppTheme.infoColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              CurrencyFormatter.format(trf.amount),
+                              style: const TextStyle(
+                                color: AppTheme.infoColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),

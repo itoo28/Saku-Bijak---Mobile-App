@@ -225,6 +225,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                           ? AppTheme.darkTextPrimary
                           : AppTheme.lightTextPrimary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -235,6 +237,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                           : AppTheme.lightTextSecondary,
                       fontSize: 11,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (t.note.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -255,14 +259,18 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  '${isIncome ? '+' : '-'}${CurrencyFormatter.format(t.amount)}',
-                  style: TextStyle(
-                    color: isIncome
-                        ? AppTheme.secondaryColor
-                        : AppTheme.expenseColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '${isIncome ? '+' : '-'}${CurrencyFormatter.format(t.amount)}',
+                    style: TextStyle(
+                      color: isIncome
+                          ? AppTheme.secondaryColor
+                          : AppTheme.expenseColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -345,6 +353,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                           ? AppTheme.darkTextPrimary
                           : AppTheme.lightTextPrimary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -355,6 +365,8 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
                           : AppTheme.lightTextSecondary,
                       fontSize: 11,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (t.note.isNotEmpty) ...[
                     const SizedBox(height: 4),
@@ -375,12 +387,16 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
-                  CurrencyFormatter.format(t.amount),
-                  style: const TextStyle(
-                    color: AppTheme.infoColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    CurrencyFormatter.format(t.amount),
+                    style: const TextStyle(
+                      color: AppTheme.infoColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),

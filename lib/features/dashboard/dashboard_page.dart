@@ -307,38 +307,45 @@ class DashboardPage extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: (isDark
-                                            ? const Color(0xFFB794F6)
-                                            : AppTheme.primaryColor)
-                                        .withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: (isDark
+                                              ? const Color(0xFFB794F6)
+                                              : AppTheme.primaryColor)
+                                          .withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.calendar_month_rounded,
+                                      size: 16,
+                                      color: isDark
+                                          ? const Color(0xFFB794F6)
+                                          : AppTheme.primaryColor,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    Icons.calendar_month_rounded,
-                                    size: 16,
-                                    color: isDark
-                                        ? const Color(0xFFB794F6)
-                                        : AppTheme.primaryColor,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Bulan Ini (${_getMonthName(now.month)})',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: isDark
+                                            ? AppTheme.darkTextPrimary
+                                            : AppTheme.lightTextPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Bulan Ini (${_getMonthName(now.month)})',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: isDark
-                                        ? AppTheme.darkTextPrimary
-                                        : AppTheme.lightTextPrimary,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Material(
                               color: Colors.transparent,
                               child: InkWell(
@@ -564,30 +571,37 @@ class DashboardPage extends ConsumerWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    (monthlyIncome - monthlyExpense) >= 0
-                                        ? Icons.account_balance_wallet_outlined
-                                        : Icons.warning_amber_rounded,
-                                    size: 15,
-                                    color: (monthlyIncome - monthlyExpense) >= 0
-                                        ? AppTheme.secondaryColor
-                                        : AppTheme.expenseColor,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Arus Kas Bersih',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                      color: isDark
-                                          ? AppTheme.darkTextSecondary
-                                          : AppTheme.lightTextSecondary,
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      (monthlyIncome - monthlyExpense) >= 0
+                                          ? Icons.account_balance_wallet_outlined
+                                          : Icons.warning_amber_rounded,
+                                      size: 15,
+                                      color: (monthlyIncome - monthlyExpense) >= 0
+                                          ? AppTheme.secondaryColor
+                                          : AppTheme.expenseColor,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Arus Kas Bersih',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? AppTheme.darkTextSecondary
+                                              : AppTheme.lightTextSecondary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(

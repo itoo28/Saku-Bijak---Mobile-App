@@ -10,13 +10,6 @@ import '../../core/finance_providers.dart';
 import '../../core/providers.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/database/schemas/account.dart';
-import '../../core/database/schemas/category.dart';
-import '../../core/database/schemas/transaction.dart';
-import '../../core/database/schemas/transfer.dart';
-import '../../core/database/schemas/goal.dart';
-import '../../core/database/schemas/goal_transaction.dart';
-import '../../core/database/schemas/budget.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});

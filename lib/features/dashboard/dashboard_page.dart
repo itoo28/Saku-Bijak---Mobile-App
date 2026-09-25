@@ -13,6 +13,7 @@ import '../transactions/widgets/add_transfer_sheet.dart';
 import '../goals/widgets/add_goal_sheet.dart';
 import '../goals/widgets/goal_deposit_sheet.dart';
 import '../goals/widgets/goal_withdraw_sheet.dart';
+import '../reports/reports_page.dart';
 
 // Check if we should display the backup reminder banner
 final backupReminderProvider = FutureProvider<bool>((ref) async {
@@ -109,37 +110,54 @@ class DashboardPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
+                          Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.asset(
-                                'assets/images/logo.png',
-                                fit: BoxFit.cover,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Saku Bijak',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Saku Bijak',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                            tooltip: 'Laporan & Grafik Keuangan',
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ReportsPage(),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -346,6 +364,51 @@ class DashboardPage extends ConsumerWidget {
                               ],
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 16),
+                        Divider(
+                          height: 1,
+                          color: isDark ? const Color(0xFF2C2454) : Colors.grey.shade200,
+                        ),
+                        const SizedBox(height: 10),
+                        InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ReportsPage(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.bar_chart_rounded,
+                                  color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Buka Laporan & Analisis Lengkap',
+                                  style: TextStyle(
+                                    color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: isDark ? const Color(0xFF9F75FF) : AppTheme.primaryColor,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),

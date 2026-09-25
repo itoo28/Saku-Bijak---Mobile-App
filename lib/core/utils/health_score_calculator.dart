@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../finance_providers.dart';
 import '../providers.dart';
-import '../database/schemas/transaction.dart';
-import '../database/schemas/goal_transaction.dart';
 
 final financialHealthScoreProvider = FutureProvider<int>((ref) async {
   // Watch transactions, budgets, goals to recalculate on updates

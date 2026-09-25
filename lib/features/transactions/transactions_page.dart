@@ -7,6 +7,7 @@ import '../../core/database/schemas/transaction.dart' as schema;
 import '../../core/database/schemas/transfer.dart';
 import 'widgets/add_transaction_sheet.dart';
 import 'widgets/add_transfer_sheet.dart';
+import '../reports/reports_page.dart';
 
 class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
@@ -41,6 +42,20 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Transaksi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded),
+            tooltip: 'Laporan & Grafik',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ReportsPage(),
+                ),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppTheme.primaryColor,

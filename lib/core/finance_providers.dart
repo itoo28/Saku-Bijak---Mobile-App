@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
 import 'database/finance_repository.dart';
 import 'database/schemas/account.dart';
 import 'database/schemas/category.dart';
@@ -468,4 +467,13 @@ final categoryByIdProvider = FutureProvider.family<Category?, int>((
   ref.watch(incomeCategoriesProvider);
   ref.watch(expenseCategoriesProvider);
   return await repo.getCategory(categoryId);
+});
+
+final allCategoriesProvider = FutureProvider<List<Category>>((ref) async {
+  final repo = ref.watch(financeRepositoryProvider);
+  ref.watch(incomeCategoriesProvider);
+  ref.watch(expenseCategoriesProvider);
+  final inc = await repo.getCategories('income');
+  final exp = await repo.getCategories('expense');
+  return [...inc, ...exp];
 });
